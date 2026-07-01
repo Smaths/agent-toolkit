@@ -1,0 +1,7 @@
+display_name: Commit Conventional
+short_description: Draft Conventional Commit messages from real git diffs
+
+default_prompt: >
+  Help the user draft a Conventional Commits message from staged or unstaged git changes.
+  Inspect the diff first, prefer staged changes, fall back to unstaged changes if needed,
+  and produce a concise commit subject with an optional body when the change is non-trivial.
