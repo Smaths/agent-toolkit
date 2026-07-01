@@ -1,7 +1,7 @@
 ---
 name: commit-conventional
 description: >
-  Write Conventional Commits-style commit messages from staged or unstaged git changes.
+  Draft Conventional Commits-style messages from staged or unstaged git changes.
   Use this whenever the user asks to write a commit message, commit their changes, asks
   "what should I commit this as", or mentions git commit, staging, conventional commits,
   semantic commits, or commit conventions. Also use when reviewing a diff and the user
@@ -14,19 +14,26 @@ Writes commit messages that follow the Conventional Commits 1.0.0 spec
 (https://www.conventionalcommits.org/en/v1.0.0/), based on the actual code
 changes rather than what the user says the change is about.
 
+## Defaults
+
+- Prefer one best draft, not a list of alternatives.
+- Prefer staged changes when they exist; use unstaged changes only when no staged changes are present.
+- If git context is missing, ask for a pasted diff or a brief summary.
+- If the change set is too mixed to describe honestly, say it should be split.
+
 ## Workflow
 
-1. **Inspect the changes.** Prefer `git diff --staged`. If nothing is staged,
-   fall back to `git diff` and tell the user you're describing unstaged
-   changes. If git inspection is unavailable or the repo cannot be read, ask
-   the user for a pasted diff or a brief summary of the changes instead of
-   guessing from conversation context alone.
+1. **Inspect the changes.** Prefer `git diff --staged`. If staged changes
+   exist, describe those changes only. If nothing is staged, fall back to
+   `git diff` and tell the user you're describing unstaged changes. If git
+   inspection is unavailable or the repo cannot be read, ask the user for a
+   pasted diff or a brief summary of the changes instead of guessing from
+   conversation context alone.
 
 2. **Check for scope creep.** If the diff spans clearly unrelated concerns
    (e.g. a bug fix plus an unrelated dependency bump plus a docs edit), say so
-   and propose splitting into separate commits rather than writing one message
-   that tries to cover everything. Don't silently smoosh unrelated changes
-   into a single type/subject.
+   and recommend splitting it into separate commits instead of forcing one
+   subject to cover everything.
 
 3. **Pick the type.** See the type table below. Pick the type that reflects
    the primary *intent* of the change, not just the file extension touched
@@ -57,10 +64,20 @@ changes rather than what the user says the change is about.
 
 8. **Present the message, don't commit it.** Output the drafted message
    (ideally in a fenced code block so it's easy to copy or pipe to
-   `git commit -F -`). Only run `git commit` yourself if the user explicitly
-   asks you to, and never run `git add -A` / `git add .` to paper over the
-   "check for scope creep" step above; stage the specific files or hunks that
-   belong to the commit being described.
+   `git commit -F -`). If you need clarification, ask one short question and
+   stop. Do not commit yet.
+
+9. **Offer the handoff.** Ask whether the user wants you to create the commit
+   now. Only run `git commit` after explicit confirmation. Never run
+   `git add -A` / `git add .` to paper over the "check for scope creep" step
+   above; stage the specific files or hunks that belong to the commit being
+   described.
+
+## Examples
+
+- `feat(parser): add diff-aware commit draft`
+- `fix(cli): handle empty staged changes`
+- `docs: clarify commit handoff flow`
 
 ## Types
 
