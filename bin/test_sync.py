@@ -48,7 +48,7 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(self.shared.resolve(), self.skill)
             self.assertEqual(self.claude.resolve(), self.skill)
-            self.assertEqual(self.prompt.resolve(), self.skill / "SKILL.md")
+            self.assertFalse(self.prompt.is_symlink())
             self.assertFalse(self.legacy.is_symlink())
             self.assertFalse((self.shared.parent / "bin").exists())
             self.assertEqual((unrelated / "SKILL.md").read_text(), "Keep me\n")
@@ -56,7 +56,7 @@ class SyncTests(unittest.TestCase):
 
     def test_conflicting_destinations_remain_untouched(self):
         self.legacy.symlink_to(self.skill)
-        for destination in (self.shared, self.claude, self.prompt):
+        for destination in (self.shared, self.claude):
             with self.subTest(destination=destination):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text("Keep me\n")
@@ -73,6 +73,18 @@ class SyncTests(unittest.TestCase):
         result = self.run_sync()
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.shared.readlink(), Path("missing"))
+
+    def test_pi_prompt_directory_is_not_created(self):
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(self.prompt.parent.exists())
+
+    def test_separate_pi_prompt_is_preserved(self):
+        self.prompt.parent.mkdir(parents=True)
+        self.prompt.write_text("Separate prompt\n")
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.prompt.read_text(), "Separate prompt\n")
 
     def test_separate_codex_installation_is_preserved(self):
         self.legacy.mkdir()

@@ -17,18 +17,22 @@ link_skill() {
   ln -s "$source" "$destination"
 }
 
-mkdir -p "$skills_home/.agents/skills" "$skills_home/.claude/skills" "$skills_home/.pi/agent/prompts"
+mkdir -p "$skills_home/.agents/skills" "$skills_home/.claude/skills"
 for dir in "$SRC"/*/; do
   [[ -f "$dir/SKILL.md" ]] || continue
   dir="${dir%/}"
   name="${dir##*/}"
   link_skill "$dir" "$skills_home/.agents/skills/$name"
   link_skill "$dir" "$skills_home/.claude/skills/$name"
-  link_skill "$dir/SKILL.md" "$skills_home/.pi/agent/prompts/$name.md"
 
-  # Remove only a redundant symlink to this skill, never a separate installation.
+  # Remove only redundant links to this skill, never separate installations.
   legacy="$skills_home/.codex/skills/$name"
   if [[ -L "$legacy" && "$legacy" -ef "$dir" ]]; then
     rm -- "$legacy"
+  fi
+
+  prompt="$skills_home/.pi/agent/prompts/$name.md"
+  if [[ -L "$prompt" && "$prompt" -ef "$dir/SKILL.md" ]]; then
+    rm -- "$prompt"
   fi
 done

@@ -43,18 +43,13 @@ The repository and its linked installations look like this after synchronization
 │   └── skills
 │       ├── commit-conventional -> ~/.skills/commit-conventional
 │       └── docs-reality-sync -> ~/.skills/docs-reality-sync
-├── .claude
-│   └── skills
-│       ├── commit-conventional -> ~/.skills/commit-conventional
-│       └── docs-reality-sync -> ~/.skills/docs-reality-sync
-└── .pi
-    └── agent
-        └── prompts
-            ├── commit-conventional.md -> ~/.skills/commit-conventional/SKILL.md
-            └── docs-reality-sync.md -> ~/.skills/docs-reality-sync/SKILL.md
+└── .claude
+    └── skills
+        ├── commit-conventional -> ~/.skills/commit-conventional
+        └── docs-reality-sync -> ~/.skills/docs-reality-sync
 ```
 
-The directories under `.agents` and `.claude` link to the whole skill so relative supporting files continue to work. Pi receives a link to `SKILL.md` because it loads the file as a prompt template.
+Pi and other clients that support the Agent Skills paths load skills from `.agents/skills`. The `.claude/skills` links support Claude. Both locations link to the whole skill so relative supporting files continue to work.
 
 ## Composition
 
@@ -74,6 +69,8 @@ Skills should not depend on a particular agent's tools unless the task requires 
 ```
 
 The script discovers root directories that contain `SKILL.md`. It creates missing links but refuses to replace an existing file, directory, or unrelated link. This prevents synchronization from overwriting a separate installation.
+
+The script removes old Pi prompt-template links when they point to the same skill. It leaves separate prompt templates untouched. Pi exposes each shared skill once as `/skill:<name>` instead of also exposing a `/<name>` prompt command.
 
 Run the sync tests with:
 
