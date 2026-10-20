@@ -17,6 +17,25 @@ link_skill() {
   ln -s "$source" "$destination"
 }
 
+remove_owned_link() {
+  local source="$1" destination="$2" target
+  [[ -L "$destination" ]] || return 0
+  if [[ "$destination" -ef "$source" ]]; then
+    rm -- "$destination"
+    return 0
+  fi
+  target="$(readlink "$destination")"
+  if [[ "${target%/}" == "${source%/}" ]]; then
+    rm -- "$destination"
+  fi
+}
+
+# Remove links created before docs-reality-sync was renamed to sync-docs.
+remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.agents/skills/docs-reality-sync"
+remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.claude/skills/docs-reality-sync"
+remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.codex/skills/docs-reality-sync"
+remove_owned_link "$SRC/docs-reality-sync/SKILL.md" "$skills_home/.pi/agent/prompts/docs-reality-sync.md"
+
 mkdir -p "$skills_home/.agents/skills" "$skills_home/.claude/skills"
 for dir in "$SRC"/*/; do
   [[ -f "$dir/SKILL.md" ]] || continue
@@ -27,12 +46,8 @@ for dir in "$SRC"/*/; do
 
   # Remove only redundant links to this skill, never separate installations.
   legacy="$skills_home/.codex/skills/$name"
-  if [[ -L "$legacy" && "$legacy" -ef "$dir" ]]; then
-    rm -- "$legacy"
-  fi
+  remove_owned_link "$dir" "$legacy"
 
   prompt="$skills_home/.pi/agent/prompts/$name.md"
-  if [[ -L "$prompt" && "$prompt" -ef "$dir/SKILL.md" ]]; then
-    rm -- "$prompt"
-  fi
+  remove_owned_link "$dir/SKILL.md" "$prompt"
 done

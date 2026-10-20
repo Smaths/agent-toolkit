@@ -1,4 +1,0 @@
-interface:
-  display_name: "Docs Reality Sync"
-  short_description: "Review and sync docs against verified project behavior"
-  default_prompt: "Use $docs-reality-sync to check affected documentation against project changes and verified behavior. Keep reviews read-only. When asked to update, make focused corrections, preserve unrelated work, and report verification limits."

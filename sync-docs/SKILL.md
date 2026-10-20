@@ -1,9 +1,10 @@
 ---
-name: docs-reality-sync
+name: sync-docs
 description: Review or update documentation against project changes and verified behavior. Use for documentation drift, accuracy checks, or syncing docs after implementation changes.
+disable-model-invocation: true
 ---
 
-# Sync documentation with reality
+# Sync docs
 
 Follow the requested scope. Review requests are read-only. Requests to sync or update docs authorize focused documentation edits. Preserve unrelated work.
 

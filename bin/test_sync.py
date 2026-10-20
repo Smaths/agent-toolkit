@@ -21,6 +21,11 @@ class SyncTests(unittest.TestCase):
         self.claude = self.root / ".claude/skills/example"
         self.prompt = self.root / ".pi/agent/prompts/example.md"
         self.legacy = self.root / ".codex/skills/example"
+        self.old_skill = self.root / ".skills/docs-reality-sync"
+        self.old_shared = self.root / ".agents/skills/docs-reality-sync"
+        self.old_claude = self.root / ".claude/skills/docs-reality-sync"
+        self.old_codex = self.root / ".codex/skills/docs-reality-sync"
+        self.old_prompt = self.root / ".pi/agent/prompts/docs-reality-sync.md"
         self.legacy.parent.mkdir(parents=True)
 
     def run_sync(self):
@@ -73,6 +78,31 @@ class SyncTests(unittest.TestCase):
         result = self.run_sync()
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.shared.readlink(), Path("missing"))
+
+    def test_renamed_skill_links_are_removed(self):
+        links = (
+            (self.old_shared, str(self.old_skill)),
+            (self.old_claude, str(self.old_skill) + "/"),
+            (self.old_codex, str(self.old_skill)),
+            (self.old_prompt, str(self.old_skill / "SKILL.md")),
+        )
+        for destination, target in links:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.symlink_to(target)
+
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for destination, _ in links:
+            self.assertFalse(destination.is_symlink())
+
+    def test_unrelated_renamed_skill_link_is_preserved(self):
+        other = self.root / "other-old-skill"
+        other.mkdir()
+        self.old_shared.parent.mkdir(parents=True)
+        self.old_shared.symlink_to(other)
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.old_shared.resolve(), other)
 
     def test_pi_prompt_directory_is_not_created(self):
         result = self.run_sync()

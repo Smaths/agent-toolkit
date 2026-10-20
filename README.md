@@ -35,25 +35,27 @@ The repository and its linked installations look like this after synchronization
 │   │   ├── SKILL.md
 │   │   └── agents
 │   │       └── openai.yaml
-│   └── docs-reality-sync
+│   └── sync-docs
 │       ├── SKILL.md
 │       └── agents
 │           └── openai.yaml
 ├── .agents
 │   └── skills
 │       ├── commit-conventional -> ~/.skills/commit-conventional
-│       └── docs-reality-sync -> ~/.skills/docs-reality-sync
+│       └── sync-docs -> ~/.skills/sync-docs
 └── .claude
     └── skills
         ├── commit-conventional -> ~/.skills/commit-conventional
-        └── docs-reality-sync -> ~/.skills/docs-reality-sync
+        └── sync-docs -> ~/.skills/sync-docs
 ```
 
 Pi and other clients that support the Agent Skills paths load skills from `.agents/skills`. The `.claude/skills` links support Claude. Both locations link to the whole skill so relative supporting files continue to work.
 
 ## Composition
 
-A skill should handle one task and state when an agent should use it. Agents can then combine skills without merging their instructions or installation steps. For example, an agent can use `docs-reality-sync` to update documentation, then use `commit-conventional` to inspect and commit that change.
+A skill should handle one task and state when an agent should use it. Agents can then combine skills without merging their instructions or installation steps. For example, a user can invoke `sync-docs` to update documentation, then use `commit-conventional` to inspect and commit that change.
+
+`sync-docs` sets `disable-model-invocation: true`, so an agent does not select it automatically. In Pi, run it explicitly with `/skill:sync-docs`.
 
 Skills should not depend on a particular agent's tools unless the task requires them. When a vendor-specific integration is necessary, isolate it in that vendor's metadata or explain the requirement in the skill.
 
