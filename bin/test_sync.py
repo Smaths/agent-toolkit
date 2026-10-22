@@ -26,6 +26,10 @@ class SyncTests(unittest.TestCase):
         self.old_claude = self.root / ".claude/skills/docs-reality-sync"
         self.old_codex = self.root / ".codex/skills/docs-reality-sync"
         self.old_prompt = self.root / ".pi/agent/prompts/docs-reality-sync.md"
+        self.mod = self.root / ".skills/claude-mods/ctx"
+        (self.mod / ".claude-plugin").mkdir(parents=True)
+        (self.mod / ".claude-plugin/plugin.json").write_text('{"name":"ctx"}\n')
+        self.installed_mod = self.root / ".claude/skills/ctx"
         self.legacy.parent.mkdir(parents=True)
 
     def run_sync(self):
@@ -53,6 +57,8 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(self.shared.resolve(), self.skill)
             self.assertEqual(self.claude.resolve(), self.skill)
+            self.assertEqual(self.installed_mod.resolve(), self.mod)
+            self.assertFalse((self.root / ".agents/skills/claude-mods").exists())
             self.assertFalse(self.prompt.is_symlink())
             self.assertFalse(self.legacy.is_symlink())
             self.assertFalse((self.shared.parent / "bin").exists())
@@ -71,6 +77,21 @@ class SyncTests(unittest.TestCase):
                 self.assertEqual(destination.read_text(), "Keep me\n")
                 self.assertTrue(self.legacy.is_symlink())
                 destination.unlink()
+
+    def test_conflicting_mod_is_preserved(self):
+        self.installed_mod.parent.mkdir(parents=True, exist_ok=True)
+        self.installed_mod.mkdir()
+        result = self.run_sync()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Refusing to replace", result.stderr)
+        self.assertTrue(self.installed_mod.is_dir())
+
+    def test_directory_without_plugin_manifest_is_skipped(self):
+        other = self.root / ".skills/claude-mods/notes"
+        other.mkdir()
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse((self.root / ".claude/skills/notes").exists())
 
     def test_broken_shared_link_is_preserved(self):
         self.shared.parent.mkdir(parents=True)

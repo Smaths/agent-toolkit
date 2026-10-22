@@ -51,3 +51,11 @@ for dir in "$SRC"/*/; do
   prompt="$skills_home/.pi/agent/prompts/$name.md"
   remove_owned_link "$dir/SKILL.md" "$prompt"
 done
+
+# Claude mods are plugins, not agent skills. Install only plugin directories.
+for dir in "$SRC"/claude-mods/*/; do
+  [[ -f "$dir/.claude-plugin/plugin.json" ]] || continue
+  dir="${dir%/}"
+  name="${dir##*/}"
+  link_skill "$dir" "$skills_home/.claude/skills/$name"
+done

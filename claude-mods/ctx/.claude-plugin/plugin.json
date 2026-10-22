@@ -1,0 +1,6 @@
+{
+  "name": "ctx",
+  "version": "0.3.0",
+  "description": "A row above the prompt showing the session's model, context fill, branch and cost",
+  "types": "./types/index.d.ts"
+}
