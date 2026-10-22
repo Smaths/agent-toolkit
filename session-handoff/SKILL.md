@@ -9,13 +9,13 @@ compatibility: Requires filesystem access. Starting the receiving session requir
 
 Transfer the current task to a fresh session without making the receiver reconstruct the work. Use the same agent program, model, and reasoning level unless the user requests different settings.
 
-A handoff transfers ownership. After the receiving session accepts the prompt, report the transfer and stop. Do not supervise or wait for the receiver unless the user asks.
+A handoff transfers ownership. After the receiving session accepts the prompt, report the transfer and stop. Do not supervise or wait for the receiver unless the user asks. Keep the source session available until delivery is confirmed; do not close an Orca window or workspace as a substitute for ending a session.
 
 ## Confirm the transfer target
 
 - Keep the current workspace and checkout unless the user requests another location or a new worktree.
 - Start a fresh session. Do not clone, fork, or resume the current conversation because that carries its existing context.
-- Apply any agent, model, reasoning, workspace, or destination overrides stated by the user.
+- Apply any agent, model, reasoning, workspace, or destination overrides stated by the user. Distinguish a new window, tab, and split pane; do not treat these as interchangeable.
 - Determine the current settings from reliable runtime metadata, environment variables, status commands, or launcher output. Do not guess a missing model or reasoning level.
 
 ## Record the current state
@@ -87,6 +87,10 @@ Prefer the current runtime's supported agent launcher. Do not start a nested int
 
 If the session runs under Orca, load the installed `orca-cli` skill and follow its version-matched instructions for a full handoff and agent launch. Launch the current agent type in the current worktree. Pass the current model and reasoning level explicitly when Orca supports those options. Use the handoff file's absolute path in a short initial prompt.
 
+For Orca placement, default to the supported agent launch in a **new tab** and focus it when supported. Leave the source tab or pane intact during transfer so the user can recover from an incomplete launch and review the previous session. Do not create a new worktree or window just to change the layout. If the user requests a split, check the version-matched CLI: `terminal split` creates a terminal pane, not necessarily an agent-launched fresh session with reliable prompt and model delivery. Do not start a nested interactive agent via `--command` to simulate a supported launch. If the requested placement is not supported by the agent launcher, use the safe new-tab launch and explain the limitation. Orca's split directions are `horizontal` for left/right and `vertical` for top/bottom; clarify an ambiguous request for a “vertical pane” rather than guessing.
+
+Source cleanup is opt-in, not part of the default transfer. If the user explicitly requests it, identify the original Orca terminal handle and its tab/pane topology before launch (for example, from the Orca terminal environment and `terminal list --include-visual-layouts`). After confirmed prompt delivery, close **only** that original terminal pane or, if explicitly requested and verified to contain no other useful panes, its tab. Never close a whole Orca window, workspace, worktree, or all terminals; never close the receiving handle or a shared tab with other panes. Do not close the source while its final report is still being generated: use a supported post-turn cleanup mechanism if available, otherwise leave it open and give the user the exact source handle and close action. If delivery is unconfirmed, leave the source open.
+
 For another runtime, use its documented fresh-session command or API. Preserve the current working directory and pass explicit agent, model, and reasoning settings when supported. If no safe launcher is available, do not claim that the transfer occurred. Save the document and give the user the exact command to start the new session.
 
 Use an initial prompt like this:
@@ -105,5 +109,6 @@ Report:
 - the receiving session or terminal handle
 - the agent, model, and reasoning level used
 - whether the launcher confirmed prompt delivery
+- where the receiver opened and whether the original pane/tab was left open or safely cleaned up
 
 If launch failed, report the exact failure and the saved document path. After a confirmed transfer, stop work in the source session.
