@@ -1,0 +1,60 @@
+{
+  "provenance": "Selected fields from local macOS Orca 1.4.232 replies observed on 2026-10-22. IDs and paths replaced. Direct result envelopes came from agent launch, not worktree create. A delivery receipt is not proof of a successful inference.",
+  "cases": [
+    {
+      "name": "pi-model-selection-refused",
+      "agent_version": "1.3.0",
+      "input": {
+        "id": "local",
+        "ok": false,
+        "error": {
+          "code": "invalid_argument",
+          "message": "Agent pi does not support launch-time model selection. Omit --model to run the model from its own config."
+        },
+        "_meta": {"runtimeId": null}
+      },
+      "expected_status": "unconfirmed",
+      "expected_handle": null
+    },
+    {
+      "name": "codex-direct-launch-receipt",
+      "agent_version": "0.163.0",
+      "inference_observation": "gpt-6-lun/high reached the native process and UI, but the ChatGPT account rejected gpt-6-lun. Receipt delivery still succeeded.",
+      "input": {
+        "id": "request-codex",
+        "ok": true,
+        "result": {
+          "outcome": {"kind": "terminal", "handle": "term_codex_fixture", "paneKey": "tab-codex:pane-codex"},
+          "worktreeId": "repo-fixture::/fixture/worktree",
+          "receipt": {"mode": "terminal", "preferred": "terminal", "reason": "user_default", "detail": "Started a terminal agent, the default for new agent tabs in your settings."},
+          "prompt": {"delivery": "submit", "outcome": "handed-to-terminal"},
+          "placement": {"groupId": "group-fixture"},
+          "operationId": "operation-codex"
+        },
+        "_meta": {"runtimeId": "runtime-fixture"}
+      },
+      "expected_status": "delivered",
+      "expected_handle": "term_codex_fixture"
+    },
+    {
+      "name": "claude-direct-launch-receipt",
+      "agent_version": "2.1.308",
+      "inference_observation": "Native process received opus/high; response metadata identified claude-opus-5-5. Receiver read a private challenge file in the intended checkout and returned the token.",
+      "input": {
+        "id": "request-claude",
+        "ok": true,
+        "result": {
+          "outcome": {"kind": "terminal", "handle": "term_claude_fixture", "paneKey": "tab-claude:pane-claude"},
+          "worktreeId": "repo-fixture::/fixture/worktree",
+          "receipt": {"mode": "terminal", "preferred": "terminal", "reason": "user_default", "detail": "Started a terminal agent, the default for new agent tabs in your settings."},
+          "prompt": {"delivery": "submit", "outcome": "handed-to-terminal"},
+          "placement": {"groupId": "group-fixture"},
+          "operationId": "operation-claude"
+        },
+        "_meta": {"runtimeId": "runtime-fixture"}
+      },
+      "expected_status": "delivered",
+      "expected_handle": "term_claude_fixture"
+    }
+  ]
+}

@@ -55,7 +55,9 @@ Pi and other clients that support Agent Skills paths load shared skills from `.a
 
 A skill should handle one task and state when an agent should use it. Agents can then combine skills without merging their instructions or installation steps. For example, a user can invoke `sync-docs` to update documentation, then use `commit-conventional` to inspect and commit that change.
 
-`sync-docs` sets `disable-model-invocation: true`, so an agent does not select it automatically. In Pi, run it explicitly with `/skill:sync-docs`.
+`sync-docs` and `session-handoff` set `disable-model-invocation: true`, so an agent does not select them automatically. In Pi, invoke them with `/skill:sync-docs` or `/skill:session-handoff`.
+
+Use `/skill:session-handoff` to replace the current session while keeping its workspace and agent settings unless you specify overrides. A plain "handoff" request may select `orca-cli` instead, whose default can create an independent worktree. The session-handoff skill uses agent-specific preflight checks, records task-critical capabilities, and keeps a private launch-recovery record beside the handoff. Its optional Python checker is read-only; it never launches agents or closes terminals. Orca instructions load only when needed. The skill does not manage supervised workers. After editing a skill in an active Pi session, use `/reload`.
 
 Skills should not depend on a particular agent's tools unless the task requires them. When a vendor-specific integration is necessary, isolate it in that vendor's metadata or explain the requirement in the skill.
 
@@ -74,10 +76,13 @@ The script finds root directories with `SKILL.md` and mod directories with `.cla
 
 The script removes old Pi prompt-template links when they point to the same skill. It leaves separate prompt templates untouched. Pi exposes each shared skill once as `/skill:<name>` instead of also exposing a `/<name>` prompt command.
 
-Check the sync script and the `ctx` mod with:
+Check the sync script, handoff decision logic, and the `ctx` mod with:
 
 ```bash
 python3 ~/.skills/bin/test_sync.py
+python3 -B ~/.skills/session-handoff/tests/test_check_handoff.py
 claude plugin validate ~/.skills/claude-mods/ctx
 claude plugin test ~/.skills/claude-mods/ctx
 ```
+
+Handoff fixtures do not establish live Orca compatibility. See `session-handoff/tests/README.md` for the separately authorized live smoke-test procedure.

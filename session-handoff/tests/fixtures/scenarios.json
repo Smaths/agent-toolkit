@@ -1,0 +1,78 @@
+{
+  "note": "Synthetic fixtures for decision logic, not captured host receipts or evidence of live agent support.",
+  "agents": [
+    {"agent": "pi", "settings": {"provider": "fixture-provider", "model": "fixture-pi", "reasoning": "high"}},
+    {"agent": "claude", "settings": {"model": "fixture-claude", "reasoning": "high"}},
+    {"agent": "codex", "settings": {"model": "fixture-codex", "reasoning": "high"}}
+  ],
+  "checks": {
+    "settings": {"status": "supported", "evidence": "Fixture: current session values and compatibility confirmed"},
+    "launch": {"status": "supported", "evidence": "Fixture: destination documents this agent's exact-settings launch"},
+    "prompt": {"status": "supported", "evidence": "Fixture: launcher accepts an initial prompt with a receipt"},
+    "placement": {"status": "supported", "evidence": "Fixture: requested tab is supported"},
+    "handoff_access": {"status": "supported", "evidence": "Fixture: destination can read the saved handoff"},
+    "workspace": {"status": "supported", "evidence": "Fixture: same checkout and changes are present"}
+  },
+  "preflight_cases": [
+    {"name": "unknown-current-settings", "check": "settings", "status": "unknown", "expected": "unknown", "manual_settings_known": false},
+    {"name": "incompatible-settings", "check": "settings", "status": "unsupported", "expected": "unsupported", "manual_settings_known": false},
+    {"name": "generic-flags-only", "check": "launch", "status": "unknown", "expected": "unknown", "manual_settings_known": true},
+    {"name": "unsupported-launch-flags", "check": "launch", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
+    {"name": "unproven-prompt-delivery", "check": "prompt", "status": "unknown", "expected": "unknown", "manual_settings_known": true},
+    {"name": "unsupported-split", "check": "placement", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
+    {"name": "remote-file-unavailable", "check": "handoff_access", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
+    {"name": "dirty-work-not-transferred", "check": "workspace", "status": "unknown", "expected": "unknown", "manual_settings_known": true}
+  ],
+  "receipts": [
+    {
+      "name": "terminal-delivered",
+      "input": {"result": {"operationId": "operation-terminal", "launch": {"outcome": {"kind": "terminal", "handle": "terminal:fixture"}, "prompt": {"outcome": "handed-to-terminal"}}}},
+      "status": "delivered", "recovery": "none", "operation_id": "operation-terminal"
+    },
+    {
+      "name": "chat-journaled",
+      "input": {"result": {"launch": {"outcome": {"kind": "structured", "handle": "chat:fixture"}, "prompt": {"outcome": "journaled"}}}},
+      "status": "delivered", "recovery": "none", "operation_id": null
+    },
+    {
+      "name": "lost-reply-with-retry-id",
+      "input": {"error": {"code": "fixture_transport_error", "details": {"operationId": "operation-retry"}}},
+      "status": "unconfirmed", "recovery": "follow-replay-guide", "operation_id": "operation-retry"
+    },
+    {
+      "name": "silence-without-retry-id",
+      "input": {},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "legacy-handle-without-delivery",
+      "input": {"result": {"agentTerminalHandle": "terminal:legacy"}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "handle-only",
+      "input": {"result": {"launch": {"outcome": {"kind": "terminal", "handle": "terminal:fixture"}}}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "delivery-without-handle",
+      "input": {"result": {"launch": {"outcome": {"kind": "terminal"}, "prompt": {"outcome": "handed-to-terminal"}}}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "terminal-send-is-not-fresh-launch",
+      "input": {"result": {"accepted": true, "terminal": "terminal:fixture"}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "conflicting-replay-ids",
+      "input": {"operationId": "one", "result": {"operationId": "two", "launch": {"outcome": {"kind": "terminal", "handle": "terminal:fixture"}, "prompt": {"outcome": "handed-to-terminal"}}}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    },
+    {
+      "name": "error-with-apparent-delivery",
+      "input": {"ok": false, "error": "fixture failure", "result": {"launch": {"outcome": {"kind": "terminal", "handle": "terminal:fixture"}, "prompt": {"outcome": "handed-to-terminal"}}}},
+      "status": "unconfirmed", "recovery": "inspect-without-input", "operation_id": null
+    }
+  ]
+}
