@@ -85,7 +85,12 @@ Read the saved document before transfer. Check that its state matches the worksp
 
 Prefer the current runtime's supported agent launcher. Do not start a nested interactive agent in a background shell.
 
-If the session runs under Orca, load the installed `orca-cli` skill and follow its version-matched instructions for a full handoff and agent launch. Launch the current agent type in the current worktree. Pass the current model and reasoning level explicitly when Orca supports those options. Use the handoff file's absolute path in a short initial prompt.
+If the session runs under Orca, get the version-matched `orca-cli` guide from the Orca executable, **not** from an assumed skill-file path such as `~/.agents/skills/orca-cli/SKILL.md` (which may not exist on the execution host):
+
+1. Use `ORCA_CLI_COMMAND` when set; otherwise use `orca-dev` when `ORCA_DEV_REPO_ROOT` is set, `orca-ide` on Linux outside an Orca-managed terminal, or `orca` elsewhere. Keep using that executable for subsequent commands.
+2. Run its `skills get orca-cli --json` and follow the guide's full-handoff and agent-launch instructions. If the selected executable cannot run or does not support `skills get`, report the error rather than trying another executable or guessing a launch command.
+
+Launch the current agent type in the current worktree. Pass the current model and reasoning level explicitly when Orca supports those options. Use the handoff file's absolute path in a short initial prompt.
 
 For Orca placement, default to the supported agent launch in a **new tab** and focus it when supported. Leave the source tab or pane intact during transfer so the user can recover from an incomplete launch and review the previous session. Do not create a new worktree or window just to change the layout. If the user requests a split, check the version-matched CLI: `terminal split` creates a terminal pane, not necessarily an agent-launched fresh session with reliable prompt and model delivery. Do not start a nested interactive agent via `--command` to simulate a supported launch. If the requested placement is not supported by the agent launcher, use the safe new-tab launch and explain the limitation. Orca's split directions are `horizontal` for left/right and `vertical` for top/bottom; clarify an ambiguous request for a “vertical pane” rather than guessing.
 
