@@ -1,13 +1,34 @@
 # Sources
 
-Imported skills retain their authors' MIT licenses in their directories.
+Imported tools are local forks. Keep upstream licenses alongside them and record substantive adaptations below. Upstream updates are optional.
 
-| Skills | Source | Revision |
-| --- | --- | --- |
-| `grilling`, `writing-for-agents`, `diagnosing-bugs` | [Matt Pocock's skills](https://github.com/mattpocock/skills) | `5beb35b` (upstream revision dated 2026-10-19) |
-| `tdd`, `benchmark-checklist`, `swarm` | [Poteto's pstack](https://github.com/cursor/plugins/tree/main/pstack), via the [standalone mirror](https://github.com/backnotprop/pstack) | `e73df47` (upstream revision dated 2026-10-23) |
-| `unslop` | [Poteto's pstack](https://github.com/cursor/plugins/tree/main/pstack) | `e73df47` (upstream revision dated 2026-10-23) |
+The YAML registry is checked by `bin/check`. Declare every skill and Claude mod as local or imported. Import entries require an author, source URL, revision, license, and artifact paths (a list or a mapping with optional local-change notes). Record substantive adaptations. Each imported directory must retain its `LICENSE`.
 
-Local changes include local-tool fact checks in `grilling`, macOS support and removal of playbook dependencies in `benchmark-checklist`, and Orca coordination in `swarm`.
+```yaml
+local:
+  - skills/commit
+  - skills/session-handoff
+  - skills/sync-docs
+  - skills/unslop-for-agents
+  - vendor/claude/mods/ctx
+imports:
+  - author: Matt Pocock
+    source: https://github.com/mattpocock/skills
+    revision: "5beb35b" # Upstream revision dated 2026-10-19
+    license: MIT
+    artifacts:
+      skills/grilling: Uses local tools for simple fact checks.
+      skills/writing-for-agents:
+      skills/diagnosing-bugs:
+  - author: Poteto
+    source: https://github.com/cursor/plugins/tree/main/pstack
+    revision: "e73df47" # Upstream revision dated 2026-10-23
+    license: MIT
+    artifacts:
+      skills/tdd:
+      skills/unslop: Copied from the local installation and verified byte-for-byte against upstream at this revision.
+      skills/benchmark-checklist: Adds macOS commands and removes playbook dependencies.
+      vendor/orca/skills/swarm: Adapts the workflow to supervised Orca coordination.
+```
 
-`unslop` was copied from the local installation and verified byte-for-byte against upstream at this revision. No substantive local changes. `unslop-for-agents` is a local composition skill.
+The pstack imports other than `unslop` came through the [standalone mirror](https://github.com/backnotprop/pstack). Registry checks establish completeness, not license compliance or agreement with upstream contents.
