@@ -35,15 +35,16 @@ Creating links, changing agent configuration, running installers, or enabling to
 
 ## Enable on this computer
 
-Only when explicitly requested, run this from a checkout at `~/.skills`:
+Only when explicitly requested, use a checkout at `~/.skills`:
 
 ```bash
-~/.skills/bin/sync.sh
+~/.skills/bin/sync.sh --dry-run  # read-only plan; reports conflicts
+~/.skills/bin/sync.sh            # apply
 ```
 
-The script links portable skills, including `unslop`, and the Orca `swarm` skill into `~/.agents/skills` and `~/.claude/skills`. `swarm` requires Orca and the installed `orchestration` skill. The `ctx` mod links only into `~/.claude/skills`. Atlassian `twg-*` skills in Claude and OpenCode, provider-synced skills, and separate Pi/Codex installations remain outside this repo's sync policy.
+The script links portable skills, including `unslop`, into real `~/.agents/skills` and `~/.claude/skills` directories. To include the Orca `swarm` skill, add `--with-orca` to both the preview and apply commands; it requires Orca and the separately installed `orchestration` skill. A normal run removes only this repository's existing `swarm` links. The Claude `ctx` mod is **not** a skill and is not enabled by sync; owned links from its former skill-path installation are removed. See the [ctx README](vendor/claude/mods/ctx/README.md) for a separate loading path. Codex can read `~/.agents/skills`, but separate Codex-specific and Pi installations remain outside this repo's sync policy; so do Atlassian `twg-*` skills in Claude and OpenCode and provider-synced skills.
 
-Links point to source directories, so edits need no copying. Sync checks for destination conflicts before changing links, migrates links from the old repository layout, and refuses to overwrite unrelated files or installations. It requires Bash and Python 3. See the [ctx README](vendor/claude/mods/ctx/README.md) for loading and testing the mod.
+Links point to source directories, so edits need no copying. Sync requires a populated checkout at `~/.skills`, Bash, and Python 3. It checks for destination conflicts before changing links, migrates links from the old repository layout, and refuses to overwrite unrelated files or installations. `--dry-run` creates no files or directories; sync is not transactional if a filesystem error occurs during apply. An optional home-directory argument supports isolated tests, not checkout discovery. Verify discovery in the installed agent separately.
 
 ## Checks
 
@@ -63,4 +64,4 @@ bin/check
 
 It checks skill layout and frontmatter, local Markdown links and anchors, [attribution](SOURCES.md), Python/Bash/JSON/YAML syntax, and the offline test suites. Git-tracked and untracked files are checked; ignored environments and generated files are excluded. Use Markdown links for supporting files. Code examples and external URLs are not link-checked.
 
-The checks run offline after dependency setup. Sync tests use temporary homes. They do not enable tools or evaluate model behavior. Claude runtime tests remain separate; see the [ctx README](vendor/claude/mods/ctx/README.md). For opt-in handoff integration checks, see [session-handoff/tests](skills/session-handoff/tests/README.md).
+The checks run offline after dependency setup. Sync tests use temporary homes and also run in Debian CI. They do not enable tools or evaluate model behavior. Claude runtime tests remain separate; see the [ctx README](vendor/claude/mods/ctx/README.md). For opt-in handoff integration checks, see [session-handoff/tests](skills/session-handoff/tests/README.md).
