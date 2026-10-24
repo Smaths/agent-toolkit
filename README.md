@@ -1,10 +1,10 @@
-# Agent skills and Claude mods
+# Agent skills, Claude mods, and Pi extensions
 
-This repository stores shared agent skills and Claude mods under `~/.skills`. Run `bin/sync.sh` to link them into the agent directories. Edits to a linked source take effect without copying it again.
+This repository stores shared agent skills, Claude mods, and Pi extensions under `~/.skills`. Run `bin/sync.sh` to link skills and Claude mods into the agent directories. Pi extensions are linked separately as described below. Edits to a linked source take effect without copying it again.
 
 ## Where files belong
 
-Each shared skill gets its own directory at the repository root. Claude mods live under `claude-mods/` because they are plugins, not skills.
+Each shared skill gets its own directory at the repository root. Claude mods live under `claude-mods/` because they are plugins, not skills. Pi extensions live under `pi-extensions/`.
 
 | Path | Purpose |
 | --- | --- |
@@ -12,13 +12,14 @@ Each shared skill gets its own directory at the repository root. Claude mods liv
 | `<skill>/agents/<vendor>.yaml` | Optional vendor-specific display metadata. It must not contain the skill's core behavior. |
 | `<skill>/scripts/`, `<skill>/references/`, and `<skill>/assets/` | Optional files used by that skill. Refer to them with paths relative to `SKILL.md`. |
 | `claude-mods/<mod>/.claude-plugin/plugin.json` | Claude mod manifest. Keep its hooks, tests, and type declarations in the same mod directory. |
+| `pi-extensions/<name>.ts` | Pi-only executable extension, loaded from Pi's extension directory. |
 | `bin/` | Sync script and tests. This is not a skill because it has no `SKILL.md`. |
 
 Keep reusable behavior in `SKILL.md` and supporting files. Put only integration details in a vendor-named file. Do not maintain separate copies of a skill under `.claude`, `.pi`, or another agent's configuration directory. Claude mods do not need `SKILL.md` and do not load from `.agents/skills`.
 
 ## Filesystem example
 
-The repository and its linked installations look like this after synchronization:
+The repository and its linked installations look like this after setup:
 
 ```text
 ~
@@ -34,6 +35,9 @@ The repository and its linked installations look like this after synchronization
 │   │       ├── tests/
 │   │       └── types/
 │   ├── commit-conventional/
+│   ├── pi-extensions/
+│   │   ├── next.ts
+│   │   └── next.test.mjs
 │   ├── session-handoff/
 │   └── sync-docs/
 ├── .agents
@@ -41,12 +45,16 @@ The repository and its linked installations look like this after synchronization
 │       ├── commit-conventional -> ~/.skills/commit-conventional
 │       ├── session-handoff -> ~/.skills/session-handoff
 │       └── sync-docs -> ~/.skills/sync-docs
-└── .claude
-    └── skills
-        ├── commit-conventional -> ~/.skills/commit-conventional
-        ├── ctx -> ~/.skills/claude-mods/ctx
-        ├── session-handoff -> ~/.skills/session-handoff
-        └── sync-docs -> ~/.skills/sync-docs
+├── .claude
+│   └── skills
+│       ├── commit-conventional -> ~/.skills/commit-conventional
+│       ├── ctx -> ~/.skills/claude-mods/ctx
+│       ├── session-handoff -> ~/.skills/session-handoff
+│       └── sync-docs -> ~/.skills/sync-docs
+└── .pi
+    └── agent
+        └── extensions
+            └── next.ts -> ~/.skills/pi-extensions/next.ts
 ```
 
 Pi and other clients that support Agent Skills paths load shared skills from `.agents/skills`. Claude loads skills and the `ctx` mod from `.claude/skills`. The links point to whole directories so relative file paths work.
@@ -62,6 +70,19 @@ Use `swarm` to investigate a prompt or plan, split it into single-session tasks,
 Use `/skill:session-handoff` to replace the current session while keeping its workspace and agent settings unless you specify overrides. A plain "handoff" request may select `orca-cli` instead, whose default can create an independent worktree. The session-handoff skill uses agent-specific preflight checks, records task-critical capabilities, and keeps a private launch-recovery record beside the handoff. Its optional Python checker is read-only; it never launches agents or closes terminals. Orca instructions load only when needed. The skill does not manage supervised workers. After editing a skill in an active Pi session, use `/reload`.
 
 Skills should not depend on a particular agent's tools unless the task requires them. When a vendor-specific integration is necessary, isolate it in that vendor's metadata or explain the requirement in the skill.
+
+## Pi's `/next` handoff
+
+`pi-extensions/next.ts` is an interactive Pi extension, not a skill. Manually invoke `/next` to have the current session investigate and propose one bounded task; `/next parallel` also considers independent tasks but does not launch agents. Review the proposal, use `/next revise <feedback>` to reconsider it, or `/next approve` to open a fresh session and submit the approved task automatically. It never watches context usage. An unrelated conversation turn or session switch invalidates an unapproved proposal.
+
+Pi loads the extension via the link below (already installed on this machine). `bin/sync.sh` does not manage Pi extensions. Run `/reload` in an active Pi session after changing the extension.
+
+```bash
+mkdir -p "$HOME/.pi/agent/extensions"
+ln -s "$HOME/.skills/pi-extensions/next.ts" "$HOME/.pi/agent/extensions/next.ts"
+```
+
+Check the command flow with `node --experimental-strip-types --test pi-extensions/next.test.mjs` (Node.js 22.19+).
 
 ## Add and install
 
