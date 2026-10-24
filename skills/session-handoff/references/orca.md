@@ -17,9 +17,9 @@ Follow the version-matched guide for command syntax, receipts, and recovery. Thi
 
 Use `agent launch` for the resolved existing workspace, or `worktree create --agent` for a requested new worktree. Use explicit host and workspace selection where needed. Do not create coordinator tasks or use orchestration dispatch for an ownership transfer.
 
-Apply `references/preflight.md` to the selected agent and execution host. `agent launch --help` and `agent-context` expose generic flags, not proof of per-agent forwarding. Express requested settings through Orca's documented options; do not forward native argument strings to it. Never drop requested settings to bypass a refusal.
+Apply [preflight.md](preflight.md) to the selected agent and execution host. `agent launch --help` and `agent-context` expose generic flags, not proof of per-agent forwarding. Express requested settings through Orca's documented options; do not forward native argument strings to it. Never drop requested settings to bypass a refusal.
 
-Record the exact receiving handle, kind, and prompt outcome as described in `references/recovery.md`. The current guide accepts `journaled` or `handed-to-terminal` as delivery, not proof that a turn started or that settings match.
+Record the exact receiving handle, kind, and prompt outcome as described in [recovery.md](recovery.md). The current guide accepts `journaled` or `handed-to-terminal` as delivery, not proof that a turn started or that settings match.
 
 ## Placement and source cleanup
 

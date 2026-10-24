@@ -1,6 +1,6 @@
 # Launch record and recovery
 
-Before launching, create `<handoff-path>.launch.json` beside the handoff with the same private permissions. Do not put it in the repository by default. Use the preflight fields from `references/preflight.md` as its initial content, then add:
+Before launching, create `<handoff-path>.launch.json` beside the handoff with the same private permissions. Do not put it in the repository by default. Use the preflight fields from [preflight.md](preflight.md) as its initial content, then add:
 
 - `created_at`: UTC timestamp.
 - `source`: host, session ID, and handle/kind if known.

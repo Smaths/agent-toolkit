@@ -1,6 +1,6 @@
 # Swarm review scenarios
 
-These are manual instruction checks, not a model evaluation or a live Orca run. Check the corresponding part of `../SKILL.md` before accepting a change.
+These are manual instruction checks, not a model evaluation or a live Orca run. Check the corresponding part of [../SKILL.md](../SKILL.md) before accepting a change.
 
 | Request or state | Expected behavior |
 | --- | --- |
@@ -18,4 +18,4 @@ These are manual instruction checks, not a model evaluation or a live Orca run. 
 | Orca orchestration is unavailable | Report blocked parallelism, not sequential work presented as a swarm. |
 | User asked for a swarm, not a deployment | Launch the initial wave only; no commits, publish, deploy, or unbounded retries. |
 
-Verify discoverability with `bin/sync.sh` and `python3 bin/test_sync.py`. After editing an installed skill, use `/reload` in Pi. A real pilot requires a separate, authorized task with independent slices and inspection of worker artifacts and Orca receipts.
+Run `bin/check` from the repository root for offline validation, including sync tests in temporary homes. Do not sync or reload an installed skill merely to verify an edit. A real pilot requires a separate, authorized task with independent slices and inspection of worker artifacts and Orca receipts.

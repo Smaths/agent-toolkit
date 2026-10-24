@@ -21,11 +21,11 @@ Before drafting, identify the source and intended destination:
 
 Default to the same host, checkout, and settings. Apply explicit user overrides. Read current settings from reliable runtime metadata or selected non-secret configuration fields. Defaults alone do not establish the running session's settings.
 
-Follow `references/preflight.md` for a bounded check and the Pi, Claude, or Codex profile. Resolve settings first; finish document-access checks after saving the handoff. Never start test agents, change global defaults, or silently substitute settings.
+Follow [references/preflight.md](references/preflight.md) for a bounded check and the Pi, Claude, or Codex profile. Resolve settings first; finish document-access checks after saving the handoff. Never start test agents, change global defaults, or silently substitute settings.
 
 If required settings are unknown or incompatible with the requested agent, ask for the missing choices. You may save a draft marked incomplete, but do not invent an exact launch command. If settings are known but automatic launch is unsupported, prepare a manual command using the agent's documented flags.
 
-Under Orca, read `references/orca.md` before choosing a launch method. Elsewhere, use the runtime's documented fresh-session launcher. Do not start a nested interactive agent in a background shell.
+Under Orca, read [references/orca.md](references/orca.md) before choosing a launch method. Elsewhere, use the runtime's documented fresh-session launcher. Do not start a nested interactive agent in a background shell.
 
 For a different host or checkout, establish how the receiver will access the document and required files before launching. A branch name does not transfer uncommitted or untracked work. Do not commit, copy, or discard work without the necessary approval.
 
@@ -83,7 +83,7 @@ Read the saved file. Check its accuracy, next action, accessibility, and absence
 
 ## Deliver and report
 
-Follow `references/recovery.md` to create `<handoff-path>.launch.json` before launching. Keep selected evidence and retry details there, not just in the source conversation. Launch the selected agent at the resolved destination with a short prompt:
+Follow [references/recovery.md](references/recovery.md) to create `<handoff-path>.launch.json` before launching. Keep selected evidence and retry details there, not just in the source conversation. Launch the selected agent at the resolved destination with a short prompt:
 
 ```text
 Take ownership of the task described in <absolute-handoff-path>. Follow "Receiver startup" before "Next action." Treat recorded results as historical. Respect denied and pending approvals. Stop and ask if the workspace or required capabilities do not match. Do not repeat completed work without cause.

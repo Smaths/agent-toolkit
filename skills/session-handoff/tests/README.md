@@ -6,7 +6,7 @@ Run the offline suite with Python 3. It uses only the standard library:
 python3 -B ~/.skills/skills/session-handoff/tests/test_check_handoff.py
 ```
 
-`fixtures/scenarios.json` contains synthetic evidence and receipt shapes based on the Orca guide. `fixtures/live-orca-1.4.232.json` contains sanitized replies from an authorized live test; see `tests/live-results-2026-10-22.md` for its results and limitations. Each agent profile is checked against the same supported, unsupported, and unknown cases. Receipt handling covers direct `agent launch` replies and wrapped worktree-create replies. Structured-chat outcomes remain synthetic-only.
+[fixtures/scenarios.json](fixtures/scenarios.json) contains synthetic evidence and receipt shapes based on the Orca guide. [fixtures/live-orca-1.4.232.json](fixtures/live-orca-1.4.232.json) contains sanitized replies from an authorized live test; see [live-results-2026-10-22.md](live-results-2026-10-22.md) for its results and limitations. Each agent profile is checked against the same supported, unsupported, and unknown cases. Receipt handling covers direct `agent launch` replies and wrapped worktree-create replies. Structured-chat outcomes remain synthetic-only.
 
 The tests cover missing settings and evidence, custom backend checks, critical capabilities, unsupported placement, inaccessible remote files, untransferred changes, ambiguous replies, legacy handles, conflicting IDs, malformed input, and CLI exit codes. They also check that delivery does not imply receiver verification or confirmed settings, and that cleanup requests cannot cause the helper to emit launch or close commands.
 

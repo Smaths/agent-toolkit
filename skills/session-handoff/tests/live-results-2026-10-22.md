@@ -26,6 +26,6 @@ The current Pi catalog listed `gpt-6-luna`, not the original `gpt-6-lun`. The us
 
 The installed guide describes launch fields under `result.launch`. Actual `agent launch` replies placed `outcome`, `prompt`, `receipt`, and `operationId` directly under `result`. The original checker conservatively reported these successful deliveries as unconfirmed.
 
-The checker now accepts either documented worktree-create wrappers or observed direct agent-launch envelopes, and rejects mixed envelopes. Sanitized selected replies are in `tests/fixtures/live-orca-1.4.232.json`. IDs and paths were replaced; no credentials or transcript content were included.
+The checker now accepts either documented worktree-create wrappers or observed direct agent-launch envelopes, and rejects mixed envelopes. Sanitized selected replies are in [fixtures/live-orca-1.4.232.json](fixtures/live-orca-1.4.232.json). IDs and paths were replaced; no credentials or transcript content were included.
 
 These observations apply only to this host, account configuration, and build. They are not a universal compatibility table. Delivery success remains separate from inference success, model availability, and visible UI placement.

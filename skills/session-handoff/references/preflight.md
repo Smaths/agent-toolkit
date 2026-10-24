@@ -35,7 +35,7 @@ Any `unsupported` check blocks automatic launch. Otherwise, any `unknown` check 
 
 ## Optional mechanical check
 
-Store the evidence below in the launch record described in `references/recovery.md`. For Pi, Claude, and Codex, run `python3 <skill-dir>/scripts/check_handoff.py preflight <record-path>` when Python 3 is available. Otherwise apply the checks above manually. The helper checks supplied evidence for omissions; it cannot verify the evidence's truth or discover host support.
+Store the evidence below in the launch record described in [recovery.md](recovery.md). For Pi, Claude, and Codex, run `python3 <skill-dir>/scripts/check_handoff.py preflight <record-path>` when Python 3 is available. Otherwise apply the checks above manually. The helper checks supplied evidence for omissions; it cannot verify the evidence's truth or discover host support.
 
 ```json
 {
