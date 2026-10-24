@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit"
+  short_description: "Group changes and create Conventional Commits"
+  default_prompt: "Use $commit to inspect, group, and commit my changes. Preserve out-of-scope work; report commits and checks."

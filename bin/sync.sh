@@ -30,11 +30,13 @@ remove_owned_link() {
   fi
 }
 
-# Remove links created before docs-reality-sync was renamed to sync-docs.
-remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.agents/skills/docs-reality-sync"
-remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.claude/skills/docs-reality-sync"
-remove_owned_link "$SRC/docs-reality-sync" "$skills_home/.codex/skills/docs-reality-sync"
-remove_owned_link "$SRC/docs-reality-sync/SKILL.md" "$skills_home/.pi/agent/prompts/docs-reality-sync.md"
+# Remove owned links for renamed skills; preserve separate installations.
+for old in docs-reality-sync commit-conventional; do
+  remove_owned_link "$SRC/$old" "$skills_home/.agents/skills/$old"
+  remove_owned_link "$SRC/$old" "$skills_home/.claude/skills/$old"
+  remove_owned_link "$SRC/$old" "$skills_home/.codex/skills/$old"
+  remove_owned_link "$SRC/$old/SKILL.md" "$skills_home/.pi/agent/prompts/$old.md"
+done
 
 mkdir -p "$skills_home/.agents/skills" "$skills_home/.claude/skills"
 for dir in "$SRC"/*/; do

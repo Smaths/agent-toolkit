@@ -1,4 +1,0 @@
-interface:
-  display_name: "Commit Conventional"
-  short_description: "Split changes into chunks and commit conventionally"
-  default_prompt: "Use $commit-conventional to inspect my changes, group them into coherent chunks, and create Conventional Commits by default. Preserve out-of-scope work and report the resulting commits and checks."

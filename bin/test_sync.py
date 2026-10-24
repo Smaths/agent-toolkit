@@ -125,6 +125,43 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.old_shared.resolve(), other)
 
+    def test_commit_rename_and_repeat_run(self):
+        skill = self.root / ".skills/commit"
+        skill.mkdir()
+        (skill / "SKILL.md").write_text("Commit skill\n")
+        old = self.root / ".skills/commit-conventional"
+        links = []
+        for agent in (".agents", ".claude", ".codex"):
+            link = self.root / agent / "skills/commit-conventional"
+            link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(str(old) + "/")
+            links.append(link)
+        prompt = self.root / ".pi/agent/prompts/commit-conventional.md"
+        prompt.parent.mkdir(parents=True)
+        prompt.symlink_to(old / "SKILL.md")
+        links.append(prompt)
+
+        for _ in range(2):
+            result = self.run_sync()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for link in links:
+                self.assertFalse(link.is_symlink())
+            for agent in (".agents", ".claude"):
+                self.assertEqual((self.root / agent / "skills/commit").resolve(), skill)
+
+    def test_separate_commit_conventional_installations_are_preserved(self):
+        other = self.root / "other-commit"
+        other.mkdir()
+        link = self.root / ".agents/skills/commit-conventional"
+        link.parent.mkdir(parents=True)
+        link.symlink_to(other)
+        directory = self.root / ".claude/skills/commit-conventional"
+        directory.mkdir(parents=True)
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(link.resolve(), other)
+        self.assertTrue(directory.is_dir())
+
     def test_pi_prompt_directory_is_not_created(self):
         result = self.run_sync()
         self.assertEqual(result.returncode, 0, result.stderr)

@@ -34,7 +34,7 @@ The repository and its linked installations look like this after setup:
 │   │       ├── hooks/
 │   │       ├── tests/
 │   │       └── types/
-│   ├── commit-conventional/
+│   ├── commit/
 │   ├── pi-extensions/
 │   │   ├── next.ts
 │   │   └── next.test.mjs
@@ -42,12 +42,12 @@ The repository and its linked installations look like this after setup:
 │   └── sync-docs/
 ├── .agents
 │   └── skills
-│       ├── commit-conventional -> ~/.skills/commit-conventional
+│       ├── commit -> ~/.skills/commit
 │       ├── session-handoff -> ~/.skills/session-handoff
 │       └── sync-docs -> ~/.skills/sync-docs
 ├── .claude
 │   └── skills
-│       ├── commit-conventional -> ~/.skills/commit-conventional
+│       ├── commit -> ~/.skills/commit
 │       ├── ctx -> ~/.skills/claude-mods/ctx
 │       ├── session-handoff -> ~/.skills/session-handoff
 │       └── sync-docs -> ~/.skills/sync-docs
@@ -61,7 +61,7 @@ Pi and other clients that support Agent Skills paths load shared skills from `.a
 
 ## Composition
 
-A skill should handle one task and state when an agent should use it. Agents can then combine skills without merging their instructions or installation steps. For example, a user can invoke `sync-docs` to update documentation, then use `commit-conventional` to inspect and commit that change.
+A skill should handle one task and state when an agent should use it. Agents can then combine skills without merging their instructions or installation steps. For example, a user can invoke `sync-docs` to update documentation, then use `commit` to inspect and commit that change.
 
 Use `swarm` to investigate a prompt or plan, split it into single-session tasks, identify safe parallel work, and produce the next worker and continuation prompts. It targets 70% unused context with a 50% minimum, routes work by complexity and risk, and plans without launching workers unless authorized. Its sources, templates, and review scenarios live under `swarm/`.
 
