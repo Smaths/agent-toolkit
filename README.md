@@ -47,9 +47,20 @@ Links point to source directories, so edits need no copying. Sync migrates links
 
 ## Checks
 
+Checks are tested with Python 3.13 and also need Bash and Git. Set up an isolated environment once:
+
 ```bash
-python3 bin/test_sync.py
-python3 -B skills/session-handoff/tests/test_check_handoff.py
+python3 -m venv .venv
+.venv/bin/python -m pip install -r bin/requirements-check.txt
 ```
 
-For handoff integration checks, see [session-handoff/tests](skills/session-handoff/tests/README.md).
+Then run the same entry point locally and in CI:
+
+```bash
+source .venv/bin/activate
+bin/check
+```
+
+It checks skill layout and frontmatter, local Markdown links and anchors, [attribution](SOURCES.md), Python/Bash/JSON/YAML syntax, and the offline test suites. Git-tracked and untracked files are checked; ignored environments and generated files are excluded. Use Markdown links for supporting files. Code examples and external URLs are not link-checked.
+
+The checks run offline after dependency setup. Sync tests use temporary homes. They do not enable tools or evaluate model behavior. Claude runtime tests remain separate; see the [ctx README](vendor/claude/mods/ctx/README.md). For opt-in handoff integration checks, see [session-handoff/tests](skills/session-handoff/tests/README.md).
