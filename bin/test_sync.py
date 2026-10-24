@@ -13,7 +13,7 @@ class SyncTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="skills sync ")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
-        self.skill = self.root / ".skills/example"
+        self.skill = self.root / ".skills/skills/example"
         self.skill.mkdir(parents=True)
         (self.skill / "SKILL.md").write_text("Example skill\n")
         (self.root / ".skills/bin").mkdir()
@@ -26,7 +26,7 @@ class SyncTests(unittest.TestCase):
         self.old_claude = self.root / ".claude/skills/docs-reality-sync"
         self.old_codex = self.root / ".codex/skills/docs-reality-sync"
         self.old_prompt = self.root / ".pi/agent/prompts/docs-reality-sync.md"
-        self.mod = self.root / ".skills/claude-mods/ctx"
+        self.mod = self.root / ".skills/vendor/claude/mods/ctx"
         (self.mod / ".claude-plugin").mkdir(parents=True)
         (self.mod / ".claude-plugin/plugin.json").write_text('{"name":"ctx"}\n')
         self.installed_mod = self.root / ".claude/skills/ctx"
@@ -65,6 +65,52 @@ class SyncTests(unittest.TestCase):
             self.assertEqual((unrelated / "SKILL.md").read_text(), "Keep me\n")
             self.assertEqual((installed / "SKILL.md").read_text(), "Installed skill\n")
 
+    def test_old_layout_links_are_migrated(self):
+        self.shared.parent.mkdir(parents=True)
+        self.shared.symlink_to(self.root / ".skills/example")
+        self.claude.parent.mkdir(parents=True)
+        self.claude.symlink_to("../../.skills/example/")
+        self.legacy.symlink_to("../../.skills/example/")
+        self.prompt.parent.mkdir(parents=True)
+        self.prompt.symlink_to("../../../.skills/example/SKILL.md")
+        self.installed_mod.symlink_to("../../.skills/claude-mods/ctx/")
+
+        for _ in range(2):
+            result = self.run_sync()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.shared.resolve(), self.skill)
+            self.assertEqual(self.claude.resolve(), self.skill)
+            self.assertEqual(self.installed_mod.resolve(), self.mod)
+            self.assertFalse(self.legacy.is_symlink())
+            self.assertFalse(self.prompt.is_symlink())
+
+    def test_orca_skill_is_migrated_and_linked(self):
+        skill = self.root / ".skills/vendor/orca/skills/swarm"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("Orca skill\n")
+        links = []
+        for agent in (".agents", ".claude"):
+            link = self.root / agent / "skills/swarm"
+            link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(self.root / ".skills/swarm")
+            links.append(link)
+        for _ in range(2):
+            result = self.run_sync()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for link in links:
+                self.assertEqual(link.resolve(), skill)
+
+    def test_unconfigured_vendor_and_root_skills_are_skipped(self):
+        for path in (".skills/root-skill", ".skills/vendor/other/skills/other"):
+            skill = self.root / path
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text("Not installed\n")
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for agent in (".agents", ".claude"):
+            for name in ("root-skill", "other", "vendor"):
+                self.assertFalse((self.root / agent / "skills" / name).exists())
+
     def test_conflicting_destinations_remain_untouched(self):
         self.legacy.symlink_to(self.skill)
         for destination in (self.shared, self.claude):
@@ -87,7 +133,7 @@ class SyncTests(unittest.TestCase):
         self.assertTrue(self.installed_mod.is_dir())
 
     def test_directory_without_plugin_manifest_is_skipped(self):
-        other = self.root / ".skills/claude-mods/notes"
+        other = self.root / ".skills/vendor/claude/mods/notes"
         other.mkdir()
         result = self.run_sync()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -126,7 +172,7 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(self.old_shared.resolve(), other)
 
     def test_commit_rename_and_repeat_run(self):
-        skill = self.root / ".skills/commit"
+        skill = self.root / ".skills/skills/commit"
         skill.mkdir()
         (skill / "SKILL.md").write_text("Commit skill\n")
         old = self.root / ".skills/commit-conventional"
