@@ -111,6 +111,30 @@ class SyncTests(unittest.TestCase):
             for name in ("root-skill", "other", "vendor"):
                 self.assertFalse((self.root / agent / "skills" / name).exists())
 
+    def test_unslop_is_linked_and_standalone_copy_is_a_conflict(self):
+        source = self.root / ".skills/skills/unslop"
+        source.mkdir()
+        (source / "SKILL.md").write_text("Repository copy\n")
+        installed = self.root / ".agents/skills/unslop"
+        installed.parent.mkdir(parents=True)
+        installed.mkdir()
+        (installed / "SKILL.md").write_text("My version\n")
+        claude_unslop = self.root / ".claude/skills/unslop"
+        result = self.run_sync()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Refusing to replace", result.stderr)
+        self.assertEqual((installed / "SKILL.md").read_text(), "My version\n")
+        self.assertFalse(claude_unslop.exists())
+        self.assertFalse(self.shared.exists())
+        (installed / "SKILL.md").unlink()
+        installed.rmdir()
+        for _ in range(2):
+            result = self.run_sync()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(installed.is_symlink())
+            self.assertEqual(installed.resolve(), source)
+            self.assertEqual(claude_unslop.resolve(), source)
+
     def test_conflicting_destinations_remain_untouched(self):
         self.legacy.symlink_to(self.skill)
         for destination in (self.shared, self.claude):
@@ -121,6 +145,8 @@ class SyncTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("Refusing to replace", result.stderr)
                 self.assertEqual(destination.read_text(), "Keep me\n")
+                self.assertFalse((self.claude if destination == self.shared else self.shared).exists())
+                self.assertFalse(self.installed_mod.exists())
                 self.assertTrue(self.legacy.is_symlink())
                 destination.unlink()
 
@@ -131,6 +157,8 @@ class SyncTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Refusing to replace", result.stderr)
         self.assertTrue(self.installed_mod.is_dir())
+        self.assertFalse(self.shared.exists())
+        self.assertFalse(self.claude.exists())
 
     def test_directory_without_plugin_manifest_is_skipped(self):
         other = self.root / ".skills/vendor/claude/mods/notes"
@@ -145,6 +173,8 @@ class SyncTests(unittest.TestCase):
         result = self.run_sync()
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.shared.readlink(), Path("missing"))
+        self.assertFalse(self.claude.exists())
+        self.assertFalse(self.installed_mod.exists())
 
     def test_renamed_skill_links_are_removed(self):
         links = (

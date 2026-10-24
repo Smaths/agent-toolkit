@@ -41,9 +41,9 @@ Only when explicitly requested, run this from a checkout at `~/.skills`:
 ~/.skills/bin/sync.sh
 ```
 
-The script links portable skills and the Orca `swarm` skill into `~/.agents/skills` and `~/.claude/skills`. `swarm` requires Orca and the installed `orchestration` skill. The `ctx` mod links only into `~/.claude/skills`.
+The script links portable skills, including `unslop`, and the Orca `swarm` skill into `~/.agents/skills` and `~/.claude/skills`. `swarm` requires Orca and the installed `orchestration` skill. The `ctx` mod links only into `~/.claude/skills`. Atlassian `twg-*` skills in Claude and OpenCode, provider-synced skills, and separate Pi/Codex installations remain outside this repo's sync policy.
 
-Links point to source directories, so edits need no copying. Sync migrates links from the old repository layout and refuses to overwrite unrelated files or installations. It requires Bash and Python 3. See the [ctx README](vendor/claude/mods/ctx/README.md) for loading and testing the mod.
+Links point to source directories, so edits need no copying. Sync checks for destination conflicts before changing links, migrates links from the old repository layout, and refuses to overwrite unrelated files or installations. It requires Bash and Python 3. See the [ctx README](vendor/claude/mods/ctx/README.md) for loading and testing the mod.
 
 ## Checks
 
