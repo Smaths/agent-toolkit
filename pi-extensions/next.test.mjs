@@ -59,7 +59,8 @@ const proposal = "Next: bounded task.\n<<<NEXT_HANDOFF>>>\nImplement A; run test
 test("plans in the current session and only switches after approval", async () => {
 	const h = harness();
 	await h.command();
-	assert.match(h.sent.at(-1), /Think in THIS session/);
+	assert.match(h.sent.at(-1), /## Plan \(this session only\)/);
+	assert.match(h.sent.at(-1), /Do not edit files, launch agents, or switch sessions/);
 	assert.equal(h.switches.length, 0);
 	h.settle(proposal);
 	await h.command("approve");
@@ -75,6 +76,7 @@ test("parallel only plans; revision replaces the candidate", async () => {
 	const h = harness();
 	await h.command("parallel");
 	assert.match(h.sent.at(-1), /up to three genuinely independent tasks/);
+	assert.match(h.sent.at(-1), /Select ONE for the handoff/);
 	assert.equal(h.switches.length, 0);
 	h.settle(proposal);
 	await h.command("revise include a migration check");
