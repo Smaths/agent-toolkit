@@ -73,7 +73,9 @@ Skills should not depend on a particular agent's tools unless the task requires 
 
 ## Pi's `/next` handoff
 
-`pi-extensions/next.ts` is an interactive Pi extension, not a skill. Manually invoke `/next` to have the current session investigate and propose one bounded task; `/next parallel` also considers independent tasks but does not launch agents. Review the proposal, use `/next revise <feedback>` to reconsider it, or `/next approve` to open a fresh session and submit the approved task automatically. It never watches context usage. An unrelated conversation turn or session switch invalidates an unapproved proposal.
+`pi-extensions/next.ts` is an interactive Pi extension, not a skill. `/next [source]` has the current session investigate and propose one bounded task; `/next-parallel [source]` also considers independent tasks but selects just one handoff and does not launch agents. Sources can be a plan path (`docs/plan.md`, `plan:plans/next steps.txt`), a GitHub issue (`owner/repo#123` or its URL), a Jira issue (`jira:PROJ-123` or its URL), or a Linear issue (`linear:ENG-123` or its URL). Use `jira:<URL>` for custom Jira hosts. Bare `PROJ-123` is ambiguous and rejected. The legacy `/next parallel` spelling still works.
+
+With no source, the agent uses a clear goal from the conversation, or looks for a single plan at the repository root (`PLAN.md` or `plan.md`); if uncertain, it asks. Issue access requires existing agent tools and permissions—this extension does not install Jira, Linear, or GitHub clients. Review the proposal, use `/next revise <feedback>` to reconsider it (retaining its source and planning mode), or `/next approve` to open a fresh session and submit the approved task automatically. An inaccessible or ambiguous source should not yield a handoff. It never watches context usage. An unrelated conversation turn or session switch invalidates an unapproved proposal.
 
 Pi loads the extension via the link below (already installed on this machine). `bin/sync.sh` does not manage Pi extensions. Run `/reload` in an active Pi session after changing the extension.
 

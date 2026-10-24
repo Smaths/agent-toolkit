@@ -3,7 +3,7 @@ import { test } from "node:test";
 import next from "./next.ts";
 
 function harness() {
-	let command;
+	const commands = new Map();
 	let settled;
 	let startup;
 	let branch = [];
@@ -14,8 +14,7 @@ function harness() {
 	const switches = [];
 	const pi = {
 		registerCommand(name, definition) {
-			assert.equal(name, "next");
-			command = definition.handler;
+			commands.set(name, definition.handler);
 		},
 		on(name, handler) {
 			if (name === "agent_settled") settled = handler;
@@ -44,7 +43,7 @@ function harness() {
 	};
 	next(pi);
 	return {
-			command: (args = "") => command(args, ctx),
+			command: (args = "", name = "next") => commands.get(name)(args, ctx),
 			settle(text) {
 				branch = [...branch, { type: "message", id: `assistant-${++sequence}`, message: { role: "assistant", content: [{ type: "text", text }] } }];
 				settled({ aborted: false }, ctx);
@@ -118,6 +117,76 @@ test("successful revision hands off only its new assignment", async () => {
 	assert.equal(h.switches.length, 1);
 	assert.match(h.sent.at(-1), /Implement B; run test B/);
 	assert.doesNotMatch(h.sent.at(-1), /Implement A/);
+});
+
+test("explicit plan path, GitHub issue, Jira and Linear IDs direct planning", async () => {
+	for (const [source, kind] of [
+		["docs/plan.md", "plan file"],
+		["plan:plans/next steps.txt", "plan file"],
+		["owner/repo#123", "github issue"],
+		["jira:PROJ-123", "jira issue"],
+		["linear:ENG-42", "linear issue"],
+	]) {
+		const h = harness();
+		await h.command(source);
+		assert.match(h.sent.at(-1), new RegExp(kind));
+		assert.ok(h.sent.at(-1).includes(JSON.stringify(source.replace(/^(plan|jira|linear):/, ""))));
+		assert.equal(h.switches.length, 0);
+	}
+});
+
+test("recognized issue URLs are normalized and ambiguous IDs are rejected", async () => {
+	for (const [url, kind] of [
+		["https://github.com/owner/repo/issues/123?secret=abc", "github issue"],
+		["https://acme.atlassian.net/browse/PROJ-123", "jira issue"],
+		["jira:https://jira.example.com/browse/PROJ-123", "jira issue"],
+		["https://linear.app/acme/issue/ENG-42/a-short-title", "linear issue"],
+	]) {
+		const h = harness();
+		await h.command(url);
+		assert.match(h.sent.at(-1), new RegExp(kind));
+		assert.doesNotMatch(h.sent.at(-1), /secret=abc/);
+	}
+	const h = harness();
+	for (const source of ["PROJ-123", "https://example.org/issues/123", "https://u:p@github.com/owner/repo/issues/123"]) {
+		await h.command(source);
+		assert.equal(h.sent.length, 0);
+	}
+});
+
+test("no source asks for a root plan or clarification without guessing", async () => {
+	const h = harness();
+	await h.command();
+	assert.match(h.sent.at(-1), /PLAN\.md or plan\.md/);
+	assert.match(h.sent.at(-1), /ask the user which plan or issue/);
+});
+
+test("/next-parallel uses the same approval and retains source and mode on revision", async () => {
+	const h = harness();
+	await h.command("jira:PROJ-123", "next-parallel");
+	assert.match(h.sent.at(-1), /genuinely independent tasks/);
+	assert.match(h.sent.at(-1), /jira issue "PROJ-123"/);
+	h.settle(proposal);
+	await h.command("revise include validation");
+	assert.match(h.sent.at(-1), /genuinely independent tasks/);
+	assert.match(h.sent.at(-1), /jira issue "PROJ-123"/);
+	assert.match(h.sent.at(-1), /requested revision: include validation/);
+	h.settle(proposal);
+	await h.command("approve");
+	assert.equal(h.switches.length, 1);
+	assert.match(h.sent.at(-1), /Source \(jira\): PROJ-123/);
+});
+
+test("/next-parallel rejects approval and revisions; stale proposals cannot be revised", async () => {
+	const h = harness();
+	await h.command("approve", "next-parallel");
+	await h.command("revise feedback", "next-parallel");
+	assert.equal(h.sent.length, 0);
+	await h.command("docs/plan.md");
+	h.settle(proposal);
+	h.appendMessage();
+	await h.command("revise feedback");
+	assert.equal(h.sent.length, 1);
 });
 
 test("stale proposals cannot launch a session", async () => {
