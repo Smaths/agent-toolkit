@@ -1,6 +1,6 @@
 ---
 name: html-report
-description: "Create a self-contained, Snarfum-styled HTML investigation or decision report with evidence, purposeful visuals, and a recommendation. Use when the user asks for a visual HTML report."
+description: "Create a self-contained HTML investigation or decision report with the Snarfum design system. Use when asked for a Snarfum-styled HTML report; requires the design-system source."
 ---
 
 # HTML Report
