@@ -26,11 +26,11 @@ if [[ ! -d "$skills_home" ]]; then
   exit 1
 fi
 skills_home="$(cd "$skills_home" && pwd -P)"
-SRC="$skills_home/.skills"
+# The checkout is the parent of this script's directory, independent of HOME or cwd.
+SRC="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 
-# A wrong home or checkout location must not look like a successful sync.
 if [[ ! -f "$SRC/README.md" || ! -f "$SRC/bin/sync.sh" || ! -d "$SRC/skills" ]]; then
-  printf 'Missing toolkit checkout at %s (expected README.md, bin/sync.sh, and skills/).\n' "$SRC" >&2
+  printf 'Missing toolkit contents at %s (expected README.md, bin/sync.sh, and skills/).\n' "$SRC" >&2
   exit 1
 fi
 if ! command -v python3 >/dev/null 2>&1; then
@@ -60,6 +60,24 @@ if (( with_orca )); then
   fi
 fi
 
+link_target() {
+  python3 -c 'import os, sys
+p = sys.argv[1]
+print(os.path.abspath(os.path.join(os.path.dirname(p), os.readlink(p))))' "$1"
+}
+
+is_old_checkout_link() {
+  local source="$1" destination="$2" target old
+  [[ "$source" == "$SRC/"* && -L "$destination" ]] || return 1
+  target="$(link_target "$destination")"
+  for old in "$skills_home/.skills" "$skills_home/.agent-toolkit"; do
+    if [[ "$old" != "$SRC" && "${target%/}" == "$old/${source#"$SRC/"}" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 is_owned_link() {
   local source="$1" destination="$2" target
   [[ -L "$destination" ]] || return 1
@@ -67,10 +85,8 @@ is_owned_link() {
     return 0
   fi
   # Normalize even broken relative links left by a repository move.
-  target="$(python3 -c 'import os, sys
-p = sys.argv[1]
-print(os.path.abspath(os.path.join(os.path.dirname(p), os.readlink(p))))' "$destination")"
-  [[ "${target%/}" == "${source%/}" ]]
+  target="$(link_target "$destination")"
+  [[ "${target%/}" == "${source%/}" ]] || is_old_checkout_link "$source" "$destination"
 }
 
 report() {
@@ -86,6 +102,14 @@ moved_source() {
 
 link_skill() {
   local source="$1" destination="$2" previous="${3:-}" moved="${4:-}"
+  if is_old_checkout_link "$source" "$destination"; then
+    report MIGRATE "$destination"
+    if [[ "$mode" == apply ]]; then
+      rm -- "$destination"
+      ln -s "$source" "$destination"
+    fi
+    return 0
+  fi
   if is_owned_link "$source" "$destination"; then
     report KEEP "$destination"
     return 0

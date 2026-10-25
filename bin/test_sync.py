@@ -1,6 +1,7 @@
 """Run with python3 bin/test_sync.py. All writes stay in temporary directories."""
 
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -13,12 +14,17 @@ class SyncTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="skills sync ")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
-        self.skill = self.root / ".skills/skills/example"
+        self.checkout = self.root / "workspace/agent-toolkit"
+        self.skill = self.checkout / "skills/example"
         self.skill.mkdir(parents=True)
         (self.skill / "SKILL.md").write_text("Example skill\n")
-        (self.root / ".skills/bin").mkdir()
-        (self.root / ".skills/bin/sync.sh").write_text("test fixture\n")
-        (self.root / ".skills/README.md").write_text("Toolkit\n")
+        (self.checkout / "bin").mkdir()
+        self.script = self.checkout / "bin/sync.sh"
+        shutil.copy2(SCRIPT, self.script)
+        (self.checkout / "README.md").write_text("Toolkit\n")
+        # Legacy aliases let older fixtures exercise links from previous layouts.
+        (self.root / ".skills").symlink_to(self.checkout, target_is_directory=True)
+        (self.root / ".agent-toolkit").symlink_to(self.checkout, target_is_directory=True)
         self.shared = self.root / ".agents/skills/example"
         self.claude = self.root / ".claude/skills/example"
         self.prompt = self.root / ".pi/agent/prompts/example.md"
@@ -36,7 +42,7 @@ class SyncTests(unittest.TestCase):
 
     def run_sync(self, *options):
         return subprocess.run(
-            ["bash", str(SCRIPT), *options, str(self.root)],
+            ["bash", str(self.script), *options, str(self.root)],
             capture_output=True, text=True,
         )
 
@@ -66,6 +72,59 @@ class SyncTests(unittest.TestCase):
             self.assertFalse((self.shared.parent / "bin").exists())
             self.assertEqual((unrelated / "SKILL.md").read_text(), "Keep me\n")
             self.assertEqual((installed / "SKILL.md").read_text(), "Installed skill\n")
+
+    def test_moved_checkout_repairs_broken_links_without_touching_unrelated_links(self):
+        old_source = self.root / ".agent-toolkit/skills/example"
+        self.shared.parent.mkdir(parents=True)
+        self.shared.symlink_to(old_source)
+        self.claude.parent.mkdir(parents=True)
+        self.claude.symlink_to("../../.agent-toolkit/skills/example")
+        unrelated = self.shared.parent / "other"
+        unrelated.symlink_to(self.root / "elsewhere")
+        (self.root / ".agent-toolkit").unlink()
+        (self.root / ".skills").unlink()
+        new_source = self.skill
+
+        preview = self.run_sync("--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertIn(f"MIGRATE {self.shared}", preview.stdout)
+        self.assertIn(f"MIGRATE {self.claude}", preview.stdout)
+        self.assertEqual(self.shared.readlink(), old_source)
+
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.shared.readlink(), new_source)
+        self.assertEqual(self.claude.readlink(), new_source)
+        self.assertEqual(unrelated.readlink(), self.root / "elsewhere")
+
+    def test_broken_old_skills_checkout_link_is_migrated(self):
+        self.shared.parent.mkdir(parents=True)
+        old_source = self.root / ".skills/skills/example"
+        self.shared.symlink_to(old_source)
+        (self.root / ".skills").unlink()
+        (self.root / ".agent-toolkit").unlink()
+        preview = self.run_sync("--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        self.assertIn(f"MIGRATE {self.shared}", preview.stdout)
+        self.assertEqual(self.shared.readlink(), old_source)
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.shared.readlink(), self.skill)
+
+    def test_discovery_outside_home_from_any_cwd_without_legacy_aliases(self):
+        (self.root / ".skills").unlink()
+        (self.root / ".agent-toolkit").unlink()
+        result = subprocess.run(
+            ["bash", str(self.script), "--dry-run", str(self.root)],
+            cwd=self.root, capture_output=True, text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"LINK {self.shared}", result.stdout)
+        self.assertFalse(self.shared.exists())
+        result = self.run_sync()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.shared.readlink(), self.skill)
+        self.assertEqual(self.claude.readlink(), self.skill)
 
     def test_old_layout_links_are_migrated(self):
         self.shared.parent.mkdir(parents=True)
@@ -100,7 +159,7 @@ class SyncTests(unittest.TestCase):
             result = self.run_sync("--with-orca")
             self.assertEqual(result.returncode, 0, result.stderr)
             for link in links:
-                self.assertEqual(link.resolve(), skill)
+                self.assertEqual(link.resolve(), skill.resolve())
 
     def test_portable_swarm_migrates_owned_vendor_links(self):
         skill = self.root / ".skills/skills/swarm"
@@ -126,7 +185,7 @@ class SyncTests(unittest.TestCase):
             result = self.run_sync()
             self.assertEqual(result.returncode, 0, result.stderr)
             for agent in (".agents", ".claude"):
-                self.assertEqual((self.root / agent / "skills/swarm").resolve(), skill)
+                self.assertEqual((self.root / agent / "skills/swarm").resolve(), skill.resolve())
             self.assertFalse((self.root / ".codex/skills/swarm").is_symlink())
             self.assertFalse(prompt.is_symlink())
 
@@ -180,8 +239,8 @@ class SyncTests(unittest.TestCase):
             result = self.run_sync()
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue(installed.is_symlink())
-            self.assertEqual(installed.resolve(), source)
-            self.assertEqual(claude_unslop.resolve(), source)
+            self.assertEqual(installed.resolve(), source.resolve())
+            self.assertEqual(claude_unslop.resolve(), source.resolve())
 
     def test_conflicting_destinations_remain_untouched(self):
         self.legacy.symlink_to(self.skill)
@@ -270,7 +329,7 @@ class SyncTests(unittest.TestCase):
             for link in links:
                 self.assertFalse(link.is_symlink())
             for agent in (".agents", ".claude"):
-                self.assertEqual((self.root / agent / "skills/commit").resolve(), skill)
+                self.assertEqual((self.root / agent / "skills/commit").resolve(), skill.resolve())
 
     def test_separate_commit_conventional_installations_are_preserved(self):
         other = self.root / "other-commit"
@@ -313,7 +372,7 @@ class SyncTests(unittest.TestCase):
         self.assertEqual(self.legacy.resolve(), other)
 
     def test_missing_or_empty_checkout_fails_without_writes(self):
-        for missing in (".skills/README.md", ".skills/bin/sync.sh", ".skills/skills/example/SKILL.md"):
+        for missing in ("workspace/agent-toolkit/README.md", "workspace/agent-toolkit/bin/sync.sh", "workspace/agent-toolkit/skills/example/SKILL.md"):
             with self.subTest(missing=missing):
                 path = self.root / missing
                 content = path.read_text()
@@ -362,8 +421,8 @@ class SyncTests(unittest.TestCase):
         self.assertFalse(claude.exists())
         result = self.run_sync("--with-orca")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(shared.resolve(), skill)
-        self.assertEqual(claude.resolve(), skill)
+        self.assertEqual(shared.resolve(), skill.resolve())
+        self.assertEqual(claude.resolve(), skill.resolve())
         result = self.run_sync("--dry-run")
         self.assertIn(f"REMOVE {shared}", result.stdout)
         self.assertIn(f"REMOVE {claude}", result.stdout)
@@ -394,15 +453,15 @@ class SyncTests(unittest.TestCase):
         self.assertIn("Duplicate skill name", result.stderr)
         self.assertFalse(self.shared.parent.exists())
 
-    def test_no_checkout_fails_without_creating_destinations(self):
+    def test_destination_home_does_not_need_a_checkout(self):
         empty_home = self.root / "empty"
         empty_home.mkdir()
         result = subprocess.run(
-            ["bash", str(SCRIPT), str(empty_home)], capture_output=True, text=True,
+            ["bash", str(self.script), str(empty_home)], capture_output=True, text=True,
         )
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Missing toolkit checkout", result.stderr)
-        self.assertEqual(list(empty_home.iterdir()), [])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((empty_home / ".agents/skills/example").resolve(), self.skill)
+        self.assertEqual((empty_home / ".claude/skills/example").resolve(), self.skill)
 
     def test_opt_in_requires_orca_skill(self):
         result = self.run_sync("--with-orca")
