@@ -17,6 +17,7 @@ imports:
     revision: "5beb35b" # Upstream revision dated 2026-10-19
     license: MIT
     artifacts:
+      skills/html-report: Adapts evidence-backed visual reporting and option comparison into a general skill; replaces the CDN scaffold and architecture-specific format with the Snarfum design-system dependency and offline CSS embedding. No upstream prose copied.
       skills/grilling: Uses local tools for simple fact checks.
       skills/writing-for-agents:
       skills/diagnosing-bugs:
@@ -30,5 +31,7 @@ imports:
       skills/benchmark-checklist: Adds macOS commands and removes playbook dependencies.
       vendor/orca/skills/swarm: Adapts the workflow to supervised Orca coordination.
 ```
+
+The `html-report` inspiration at Matt Pocock revision `5beb35b040e3de97e54fa9e386d7e42d15c295c2`: [architecture skill](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/SKILL.md), [HTML report guidance](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/HTML-REPORT.md), and [design it twice](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/codebase-design/DESIGN-IT-TWICE.md). The local skill generalizes their content principles; the original MIT license is retained.
 
 The pstack imports other than `unslop` came through the [standalone mirror](https://github.com/backnotprop/pstack). Registry checks establish completeness, not license compliance or agreement with upstream contents.
