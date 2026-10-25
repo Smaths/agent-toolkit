@@ -1,0 +1,12 @@
+---
+name: verification-readiness
+description: Prepare verification-ready briefs for delegated coding tasks with one worker. Use before dispatching an implementation or bug fix, or when another delegation workflow needs a runnable project check, environment preflight, and evidence contract for a worker.
+---
+
+# Verification readiness
+
+Prepare the verification part of a worker brief; use the delegation workflow separately to launch or supervise work. Infer a concise goal, scope, and observable pass condition from the user's task. Ask only if the intended outcome is ambiguous or an authorization decision is needed; do not ask the user to supply commands the project documents.
+
+1. **Discover the check.** Read project instructions, test/build documentation, relevant manifests, CI, and nearby tests. Choose the smallest check that exercises the requested change. Record its command and source, prerequisites (tools, versions, services, data, access), and any side effects. For a bug fix, an expected failing reproduction of the reported symptom is a valid starting signal; a missing dependency, unreachable service, or broken harness is a setup blocker, not that signal. TDD and a green baseline are not prerequisites for delegation.
+2. **Establish readiness.** Determine whether the check can run in the worker's environment, not just the coordinator's. If safe and available, run a focused preflight there and record the actual result, including an expected bug failure. Do not install dependencies, alter configuration, or start services without authorization. If readiness cannot be established before launch, make checking prerequisites and running the selected check the worker's **first step before edits**; require the worker to stop and escalate on a setup blocker rather than silently substituting a weaker check. If no executable check fits, name the closest useful verification and the uncovered behavior as a gap.
+3. **Hand off and inspect.** Give the worker the goal and pass condition, source revision/snapshot (including relevant uncommitted changes), permitted scope, chosen check and prerequisites, preflight result or first-step readiness gate, expected evidence, and stop conditions. Require the result to identify the revision actually checked, exact checks run, their results (including expected reproduction versus infrastructure failure), and remaining gaps. Treat an unrun check or inaccessible evidence as a gap, not a pass; independently inspect evidence before claiming verification.

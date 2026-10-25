@@ -10,6 +10,7 @@ local:
   - skills/session-handoff
   - skills/sync-docs
   - skills/unslop-for-agents
+  - skills/verification-readiness
   - vendor/claude/mods/ctx
 imports:
   - author: Matt Pocock
@@ -29,7 +30,7 @@ imports:
       skills/tdd:
       skills/unslop: Copied from the local installation and verified byte-for-byte against upstream at this revision.
       skills/benchmark-checklist: Adds macOS commands and removes playbook dependencies.
-      vendor/orca/skills/swarm: Adapts the workflow to supervised Orca coordination.
+      skills/swarm: Makes the swarm workflow portable; uses the host's worker facility and preserves Orca's supervised path.
 ```
 
 The `html-report` inspiration at Matt Pocock revision `5beb35b040e3de97e54fa9e386d7e42d15c295c2`: [architecture skill](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/SKILL.md), [HTML report guidance](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/HTML-REPORT.md), and [design it twice](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/codebase-design/DESIGN-IT-TWICE.md). The local skill generalizes their content principles; the original MIT license is retained.

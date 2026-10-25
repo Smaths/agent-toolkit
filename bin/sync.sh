@@ -77,13 +77,21 @@ report() {
   [[ "$mode" == check ]] || printf '%s %s\n' "$1" "$2"
 }
 
+# The portable swarm replaces the former Orca-only source.
+moved_source() {
+  if [[ "$1" == "$SRC/skills/swarm" ]]; then
+    printf '%s' "$SRC/vendor/orca/skills/swarm"
+  fi
+}
+
 link_skill() {
-  local source="$1" destination="$2" previous="${3:-}"
+  local source="$1" destination="$2" previous="${3:-}" moved="${4:-}"
   if is_owned_link "$source" "$destination"; then
     report KEEP "$destination"
     return 0
   fi
-  if [[ -n "$previous" ]] && is_owned_link "$previous" "$destination"; then
+  if { [[ -n "$previous" ]] && is_owned_link "$previous" "$destination"; } ||
+     { [[ -n "$moved" ]] && is_owned_link "$moved" "$destination"; }; then
     report MIGRATE "$destination"
     if [[ "$mode" == apply ]]; then
       rm -- "$destination"
@@ -136,8 +144,9 @@ fi
 conflicts=0
 for dir in "${skills[@]}"; do
   name="${dir##*/}"
-  link_skill "$dir" "$skills_home/.agents/skills/$name" "$SRC/$name" || conflicts=1
-  link_skill "$dir" "$skills_home/.claude/skills/$name" "$SRC/$name" || conflicts=1
+  moved="$(moved_source "$dir")"
+  link_skill "$dir" "$skills_home/.agents/skills/$name" "$SRC/$name" "$moved" || conflicts=1
+  link_skill "$dir" "$skills_home/.claude/skills/$name" "$SRC/$name" "$moved" || conflicts=1
 done
 if (( conflicts )); then
   exit 1
@@ -181,17 +190,20 @@ if [[ "$mode" == apply ]]; then
 fi
 for dir in "${skills[@]}"; do
   name="${dir##*/}"
+  moved="$(moved_source "$dir")"
   if [[ "$mode" == apply ]]; then
-    link_skill "$dir" "$skills_home/.agents/skills/$name" "$SRC/$name"
-    link_skill "$dir" "$skills_home/.claude/skills/$name" "$SRC/$name"
+    link_skill "$dir" "$skills_home/.agents/skills/$name" "$SRC/$name" "$moved"
+    link_skill "$dir" "$skills_home/.claude/skills/$name" "$SRC/$name" "$moved"
   fi
 
   # Remove only redundant links to this skill, never separate installations.
   legacy="$skills_home/.codex/skills/$name"
   remove_owned_link "$dir" "$legacy"
   remove_owned_link "$SRC/$name" "$legacy"
+  if [[ -n "$moved" ]]; then remove_owned_link "$moved" "$legacy"; fi
 
   prompt="$skills_home/.pi/agent/prompts/$name.md"
   remove_owned_link "$dir/SKILL.md" "$prompt"
   remove_owned_link "$SRC/$name/SKILL.md" "$prompt"
+  if [[ -n "$moved" ]]; then remove_owned_link "$moved/SKILL.md" "$prompt"; fi
 done

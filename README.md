@@ -21,7 +21,7 @@ bin/                                  # Repository tooling
 
 Every skill belongs in a `skills/` directory. Keep its scripts, references, assets, tests, and optional metadata alongside `SKILL.md`. Use relative paths for supporting files and load them only when needed.
 
-The Orca-dependent `swarm` skill lives in `vendor/orca/skills/`. The Claude Code `ctx` mod lives in `vendor/claude/mods/`. Imported skills retain their licenses. See [sources](SOURCES.md) for attribution.
+The portable `swarm` skill lives in `skills/` and uses the host's worker facility. Standalone Pi can use the optional [Pi CLI path](vendor/pi/swarm.md) without installing an extension; Orca uses its installed orchestration skill. The Claude Code `ctx` mod lives in `vendor/claude/mods/`. Imported skills retain their licenses. See [sources](SOURCES.md) for attribution.
 
 ## Add to the collection
 
@@ -42,7 +42,7 @@ Only when explicitly requested, use a checkout at `~/.skills`:
 ~/.skills/bin/sync.sh            # apply
 ```
 
-The script links portable skills, including `unslop`, into real `~/.agents/skills` and `~/.claude/skills` directories. To include the Orca `swarm` skill, add `--with-orca` to both the preview and apply commands; it requires Orca and the separately installed `orchestration` skill. A normal run removes only this repository's existing `swarm` links. The Claude `ctx` mod is **not** a skill and is not enabled by sync; owned links from its former skill-path installation are removed. See the [ctx README](vendor/claude/mods/ctx/README.md) for a separate loading path. Codex can read `~/.agents/skills`, but separate Codex-specific and Pi installations remain outside this repo's sync policy; so do Atlassian `twg-*` skills in Claude and OpenCode and provider-synced skills.
+The script links portable skills, including `unslop` and `swarm`, into real `~/.agents/skills` and `~/.claude/skills` directories. `swarm` uses the installed `orchestration` skill only in Orca-managed sessions. `--with-orca` remains an opt-in for any vendor-specific Orca skills; it does not change the portable `swarm` installation. The Claude `ctx` mod is **not** a skill and is not enabled by sync; owned links from its former skill-path installation are removed. See the [ctx README](vendor/claude/mods/ctx/README.md) for a separate loading path. Codex can read `~/.agents/skills`, but separate Codex-specific and Pi installations remain outside this repo's sync policy; so do Atlassian `twg-*` skills in Claude and OpenCode and provider-synced skills.
 
 Links point to source directories, so edits need no copying. Sync requires a populated checkout at `~/.skills`, Bash, and Python 3. It checks for destination conflicts before changing links, migrates links from the old repository layout, and refuses to overwrite unrelated files or installations. `--dry-run` creates no files or directories; sync is not transactional if a filesystem error occurs during apply. An optional home-directory argument supports isolated tests, not checkout discovery. Verify discovery in the installed agent separately.
 

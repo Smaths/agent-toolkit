@@ -102,6 +102,52 @@ class SyncTests(unittest.TestCase):
             for link in links:
                 self.assertEqual(link.resolve(), skill)
 
+    def test_portable_swarm_migrates_owned_vendor_links(self):
+        skill = self.root / ".skills/skills/swarm"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("Portable skill\n")
+        old = self.root / ".skills/vendor/orca/skills/swarm"  # Removed source; links are broken.
+        for agent in (".agents", ".claude", ".codex"):
+            link = self.root / agent / "skills/swarm"
+            link.parent.mkdir(parents=True, exist_ok=True)
+            link.symlink_to(str(old) + "/")
+        prompt = self.root / ".pi/agent/prompts/swarm.md"
+        prompt.parent.mkdir(parents=True)
+        prompt.symlink_to(old / "SKILL.md")
+
+        preview = self.run_sync("--dry-run")
+        self.assertEqual(preview.returncode, 0, preview.stderr)
+        for agent in (".agents", ".claude"):
+            self.assertIn(f"MIGRATE {self.root / agent / 'skills/swarm'}", preview.stdout)
+        self.assertIn(f"REMOVE {prompt}", preview.stdout)
+        self.assertTrue((self.root / ".agents/skills/swarm").is_symlink())
+
+        for _ in range(2):
+            result = self.run_sync()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for agent in (".agents", ".claude"):
+                self.assertEqual((self.root / agent / "skills/swarm").resolve(), skill)
+            self.assertFalse((self.root / ".codex/skills/swarm").is_symlink())
+            self.assertFalse(prompt.is_symlink())
+
+    def test_portable_swarm_conflict_preserves_old_link(self):
+        skill = self.root / ".skills/skills/swarm"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text("Portable skill\n")
+        old = self.root / ".skills/vendor/orca/skills/swarm"
+        link = self.root / ".agents/skills/swarm"
+        link.parent.mkdir(parents=True)
+        link.symlink_to(old)
+        conflict = self.root / ".claude/skills/swarm"
+        conflict.parent.mkdir(parents=True)
+        conflict.write_text("Keep me\n")
+
+        result = self.run_sync()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Refusing to replace", result.stderr)
+        self.assertEqual(link.readlink(), old)
+        self.assertEqual(conflict.read_text(), "Keep me\n")
+
     def test_unconfigured_vendor_and_root_skills_are_skipped(self):
         for path in (".skills/root-skill", ".skills/vendor/other/skills/other"):
             skill = self.root / path
