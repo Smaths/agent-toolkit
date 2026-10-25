@@ -28,6 +28,13 @@ imports:
     license: MIT
     artifacts:
       vendor/pi/extensions/pi-context-bar: Caches total session cost across render frames; distinguishes unknown context usage and prioritizes context/cost on narrow terminals.
+      vendor/pi/extensions/pi-away:
+      vendor/pi/extensions/pi-next-prompt:
+      vendor/pi/extensions/pi-heads-up:
+      vendor/pi/extensions/pi-background: Bounds log tail reads and status output; uses private unique log directories and validates timeout values; caps wake-match memory.
+      vendor/pi/extensions/pi-checkpoints: Rejects symlink paths, snapshots a single read, creates blobs with private permissions, and reports partial restore errors.
+      vendor/pi/extensions/pi-model-pick:
+      vendor/pi/extensions/pi-polish: Skips expensive highlighting for large diffs and skips reading large Python files for imports; fixes narrow-width rendering.
   - author: Poteto
     source: https://github.com/cursor/plugins/tree/main/pstack
     revision: "e73df47" # Upstream revision dated 2026-10-23
