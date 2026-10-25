@@ -21,7 +21,7 @@ bin/                                  # Repository tooling
 
 Every skill belongs in a `skills/` directory. Keep its scripts, references, assets, tests, and optional metadata alongside `SKILL.md`. Use relative paths for supporting files and load them only when needed.
 
-The portable `swarm` skill lives in `skills/` and uses the host's worker facility. Standalone Pi can use the optional [Pi CLI path](vendor/pi/swarm.md) without installing an extension; Orca uses its installed orchestration skill. The Claude Code `ctx` mod lives in `vendor/claude/mods/`. Imported skills retain their licenses. See [sources](SOURCES.md) for attribution.
+The portable `swarm` skill lives in `skills/` and uses the host's worker facility. Standalone Pi can use the optional [Pi CLI path](vendor/pi/swarm.md) without installing an extension; Orca uses its installed orchestration skill. The Claude Code `ctx` mod lives in `vendor/claude/mods/`. Curated Pi extensions live in [vendor/pi/extensions](vendor/pi/extensions/README.md); they are not enabled by sync. Imported tools retain their licenses. See [sources](SOURCES.md) for attribution.
 
 ## Add to the collection
 
