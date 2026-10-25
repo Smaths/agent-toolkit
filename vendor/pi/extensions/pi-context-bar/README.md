@@ -1,6 +1,6 @@
 # pi-context-bar
 
-A one-line footer for [Pi](https://pi.dev), styled after [ccstatusline](https://github.com/sirmalloc/ccstatusline): the model, git branch, a context bar and the session cost.
+A one-line footer for [Pi](https://pi.dev), styled after [ccstatusline](https://github.com/sirmalloc/ccstatusline): the Git branch, model information, a context bar, and the session cost.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-context-bar-dark.gif">
@@ -25,12 +25,12 @@ Do not use `bin/sync.sh` to enable Pi packages; it manages other agent resources
 
 ## What it shows
 
+- The Git branch, or `no git` outside a repository.
 - The current model, as `provider/model`, and its thinking level.
-- The git branch, or `no git` outside a repository.
 - A context bar with used and total tokens. It turns yellow at 50% and red at 80%.
 - The recorded total cost of the session so far, including prior branches and compaction.
 
-This fork shows `?` rather than a false 0% when context usage is unknown after compaction and preserves extension status text. It replaces Pi's default footer: cwd/session name, cache counters, auto-compaction indicator and virtual-model route are not displayed.
+This fork shows `?` rather than a false 0% when context usage is unknown after compaction and preserves extension status text. On narrow terminals it hides the branch, then model, before shortening the context gauge. It replaces Pi's default footer: cwd/session name, cache counters, auto-compaction indicator and virtual-model route are not displayed.
 
 ## License
 

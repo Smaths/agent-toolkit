@@ -27,7 +27,7 @@ imports:
     revision: "e5ed6372bbf82e7bcb61902b0c11a7e2514efae0"
     license: MIT
     artifacts:
-      vendor/pi/extensions/pi-context-bar: Caches total session cost across render frames; distinguishes unknown context usage and prioritizes context/cost on narrow terminals.
+      vendor/pi/extensions/pi-context-bar: Caches total session cost across render frames; distinguishes unknown context usage; orders the footer as branch, model, context, and cost; and prioritizes context/cost on narrow terminals.
   - author: Poteto
     source: https://github.com/cursor/plugins/tree/main/pstack
     revision: "e73df47" # Upstream revision dated 2026-10-23

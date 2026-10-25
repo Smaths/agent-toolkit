@@ -65,12 +65,12 @@ export default function (pi: ExtensionAPI) {
 						theme.fg(known ? barColor : "muted", ` (${known ? pct.toFixed(0) : "?"}%)`);
 					const costSeg = theme.fg("success", `$${cost.toFixed(3)}`);
 					const sep = theme.fg("dim", " │ ");
-					// Reserve space for context and cost first. Omit branch/model before hiding the gauge.
+					// Reserve space for context and cost first. Omit branch, then model, before hiding the gauge.
 					let barSize = BAR_WIDTH;
 					const essentials = (size: number) => `${contextSeg(size)}${sep}${costSeg}`;
 					barSize = Math.max(MIN_BAR_WIDTH, BAR_WIDTH - Math.max(0, visibleWidth(essentials(BAR_WIDTH)) - width));
 					let line = essentials(barSize);
-					if (visibleWidth(`${modelSeg}${sep}${branchSeg}${sep}${line}`) <= width) line = `${modelSeg}${sep}${branchSeg}${sep}${line}`;
+					if (visibleWidth(`${branchSeg}${sep}${modelSeg}${sep}${line}`) <= width) line = `${branchSeg}${sep}${modelSeg}${sep}${line}`;
 					else if (visibleWidth(`${modelSeg}${sep}${line}`) <= width) line = `${modelSeg}${sep}${line}`;
 					const statuses = [...footerData.getExtensionStatuses().entries()].sort(([a], [b]) => a.localeCompare(b))
 						.map(([, text]) => text.replace(/[\r\n\t\x00-\x1f\x7f]/g, " ").trim()).filter(Boolean);
