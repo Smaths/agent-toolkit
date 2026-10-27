@@ -1,6 +1,8 @@
 export type Line = {
   model: string
-  percent: number
+  percent: number | null
+  tokens: number | null
+  window: number | null
   branch: string | null
   costUsd: number | null
 }

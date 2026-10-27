@@ -11,7 +11,6 @@ local:
   - skills/sync-docs
   - skills/unslop-for-agents
   - skills/verification-readiness
-  - vendor/claude/mods/ctx
 imports:
   - author: Matt Pocock
     source: https://github.com/mattpocock/skills
@@ -28,6 +27,8 @@ imports:
     license: MIT
     artifacts:
       vendor/pi/extensions/pi-context-bar: Caches total session cost across render frames; distinguishes unknown context usage; orders the footer as branch, model, context, and cost; and prioritizes context/cost on narrow terminals.
+      vendor/claude/statusline: Ports the local Pi-style ctx layout to Claude's documented JSON-in/ANSI-out status-line API with Python and optional Git. Preserves unknown context, counts cache tokens without output tokens, sizes to COLUMNS, and optionally forwards input to an existing telemetry command. Adds offline rendering, worktree, and forwarding tests.
+      vendor/claude/mods/ctx: Adapts the local Pi context-bar layout into the existing locally authored Claude Code mod. Uses Claude session usage and AbovePrompt elements, retains unknown usage without a breakdown estimate, budgets Unicode width conservatively without Pi dependencies, and adds lifecycle and layout tests. Does not port Pi thinking levels or extension statuses.
   - author: Poteto
     source: https://github.com/cursor/plugins/tree/main/pstack
     revision: "e73df47" # Upstream revision dated 2026-10-23

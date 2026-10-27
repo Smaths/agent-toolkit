@@ -1,0 +1,14 @@
+{
+  "name": "snarfum-agent-toolkit",
+  "description": "Locally curated Claude Code mods from agent-toolkit",
+  "owner": {
+    "name": "Snarfum"
+  },
+  "plugins": [
+    {
+      "name": "ctx",
+      "source": "./mods/ctx",
+      "description": "A Pi-style context gauge above the Claude Code prompt"
+    }
+  ]
+}
