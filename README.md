@@ -23,30 +23,7 @@ Every skill belongs in a `skills/` directory. Keep its scripts, references, asse
 
 The portable `swarm` skill lives in `skills/` and uses the host's worker facility. Standalone Pi can use the optional [Pi CLI path](vendor/pi/swarm.md) without installing an extension; Orca uses its installed orchestration skill. Claude Code's [status-line](vendor/claude/status-line/README.md) lives in `vendor/claude/status-line/`; the legacy above-prompt `ctx` mod has been removed from this checkout. Curated Pi extensions live in [vendor/pi/extensions](vendor/pi/extensions/README.md); they are not enabled by sync. Imported tools retain their licenses. See [sources](SOURCES.md) for attribution.
 
-## Add to the collection
-
-When I ask an agent to "get" or "install" skills or other tools, add them to this repository. Do not install them into my computer's agent configurations.
-
-- Put portable skills in `skills/` and vendor-specific tools in `vendor/<vendor>/`.
-- Preserve upstream licenses. Record the author, source URL, revision, and local changes in [SOURCES.md](SOURCES.md).
-- Review additions against the philosophy above.
-
-Creating links, changing agent configuration, running installers, or enabling tools requires a separate, explicit request. Adding something here does not authorize running `bin/sync.sh`.
-
-## Enable on this computer
-
-Only when explicitly requested, run from this checkout (for example, `~/workspace/agent-toolkit`):
-
-```bash
-bin/sync.sh --dry-run  # read-only plan; reports conflicts
-bin/sync.sh            # apply
-```
-
-From another directory, invoke the checkout's `bin/sync.sh` by path. The script finds its source checkout from its own location, not from the current directory or a fixed home-directory name. By default it targets your home directory; the optional positional `home` argument changes **only the destination home** (useful for isolated tests).
-
-The script links portable skills, including `unslop` and `swarm`, into real `~/.agents/skills` and `~/.claude/skills` directories. `swarm` uses the installed `orchestration` skill only in Orca-managed sessions. `--with-orca` remains an opt-in for any vendor-specific Orca skills; it does not change the portable `swarm` installation. The Claude status-line is **not** a skill and is not enabled by sync; owned links from the former mod's skill-path installation are removed. See the [status-line README](vendor/claude/status-line/README.md) for separate configuration and preservation of existing telemetry hooks. Codex can read `~/.agents/skills`, but separate Codex-specific and Pi installations remain outside this repo's sync policy; so do Atlassian `twg-*` skills in Claude and OpenCode and provider-synced skills.
-
-Links point to source directories, so edits need no copying. Sync requires a populated checkout, Bash, and Python 3. It checks for destination conflicts before changing links, migrates links from the old repository layout and the former `~/.skills` or `~/.agent-toolkit` checkouts, and refuses to overwrite unrelated files or installations. `--dry-run` creates no files or directories; sync is not transactional if a filesystem error occurs during apply. Links to the checkout are absolute because agent directories may live elsewhere; moving the checkout again may break them and requires a fresh migration plan. Verify discovery in the installed agent separately.
+See [AGENTS.md](AGENTS.md) for collection and computer enablement instructions.
 
 ## Checks
 
