@@ -1,6 +1,6 @@
 # Repository instructions
 
-Read [README.md](README.md) before changing this collection. It defines the philosophy, layout, and checks.
+Read [README.md](README.md) before changing this collection for its public overview and checks.
 
 ## Scope
 
@@ -9,16 +9,13 @@ Read [README.md](README.md) before changing this collection. It defines the phil
 
 ## Add to the collection
 
-When I ask an agent to "get" or "install" skills or other tools, add them to this repository. Do not install them into my computer's agent configurations.
+"Get" or "install" means add to this checkout with attribution. Enable tools on the computer only when separately and explicitly requested. This includes running `bin/sync.sh` or installers and changing links or agent configuration.
 
-- Review additions against the [repository philosophy](README.md#philosophy).
 - Treat imported skills as local forks, not mirrors. Adapt them to the owner's workflow and repository philosophy within their license terms. Preserve licenses; record authors, source URLs, revisions, and substantive local changes in [SOURCES.md](SOURCES.md).
 - Upstream updates are optional. Compare changes and preserve intentional local differences.
-- Check for overlap before adding tools. Keep skills focused, composable, and vendor-agnostic; optional vendor metadata must remain optional.
-- Put portable skills in `skills/` and vendor-specific tools and processes under `vendor/<vendor>/`. Follow that vendor's documented practices. Every skill belongs in a `skills/` directory.
+- Check for overlap before adding tools. Keep skills short, focused, composable, and portable across models and runtimes. State required capabilities and dependencies; vendor metadata must be optional.
+- Put portable skills under `skills/` and vendor-specific tools and processes under `vendor/<vendor>/`. Follow each vendor's documented practices. Every skill belongs in a `skills/` directory. Keep supporting files beside `SKILL.md`; use relative references and load them only when needed.
 - Keep one authoritative explanation and link to supporting detail rather than duplicating it.
-
-Creating links, changing agent configuration, running installers, or enabling tools requires a separate, explicit request. Adding something here does not authorize running `bin/sync.sh`.
 
 ## Enable on this computer
 
