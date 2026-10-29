@@ -5,25 +5,44 @@ description: Fan out independent workers for parallel coverage, competing attemp
 
 # Swarm
 
-Adapted from [Poteto's swarm](https://github.com/cursor/plugins/blob/main/pstack/skills/swarm/SKILL.md). Use the host's documented worker facility; this skill supplies the workflow, not an agent launcher.
+Adapted from [Poteto's swarm](https://github.com/cursor/plugins/blob/main/pstack/skills/swarm/SKILL.md). Coordinate a bounded batch through the host's worker facility.
 
 ## Frame
 
-1. State the wanted result, observable pass condition, and report or artifact. If one agent is cheaper and safer, recommend that instead. For a plan-only request, return a partition and stop before launch.
-2. Choose **coverage** (independent slices), **race** (same brief, independent attempts), or **mixed**. For a race, declare `first pass`, `rank all`, or `best-of` and comparison criteria before launch. Name every required coverage slice. Use the requested worker count; otherwise start with at most three. An initial wave is not authorization for unlimited retries, commits, publishing, or deployment.
-3. Make each brief self-contained: goal, slice or race arm, accessible source revision/snapshot (including relevant uncommitted changes), ownership and do-not-touch boundaries, pass condition, verification method, evidence, and stop conditions. Discover the smallest relevant project check and whether it can run in the worker environment; if unknown, make readiness the worker's first step before edits and stop/escalate on a setup blocker. An expected failing bug reproduction is not a broken harness. Require the checked revision, exact checks, results, and gaps in each result. For a fuller check-selection procedure, see [verification-readiness](../verification-readiness/SKILL.md).
-4. Check independence beyond source files: shared configuration, lockfiles, generated files, services, caches, and ports may conflict. Isolate overlapping writers and race arms in separate accessible workspaces; assign shared edits to one owner or sequence them. Read-only workers can share a snapshot with distinct questions. Choose the integration owner before code-writing fan-out.
+1. State the wanted result, observable pass condition, and report or artifact. If one agent is cheaper and safer, recommend that instead. For a plan-only request, return a partition, state that no workers were launched, and stop.
+2. Default to **coverage**. Name every required slice and give each worker a distinct question or task. Use the requested worker count; otherwise start with at most three. For competing attempts or mixed batches, apply [the race rules](#when-workers-compete) before launch.
+3. Give each worker a self-contained brief with its goal, assigned work, accessible source snapshot, scope boundaries, pass condition, verification method, expected evidence, and stop conditions. Include relevant uncommitted changes in a code snapshot. Read-only workers may share a snapshot. Before delegating edits, apply [the editing rules](#when-workers-edit-code).
 
-## Fan out
+Check independence, including shared services, caches, ports, and outputs. When workers verify or measure code, name the revisions and exact checks or measurement method in their briefs and require them in the results. For measurements, include sample count and order where relevant.
 
-Confirm the host can start independent workers concurrently and retrieve their outcomes. Prefer its native subagent/coordination facility and current documentation; use configured defaults unless the user selected a model. In an Orca-managed session, load the installed `orchestration` skill and its version-matched guide for the entire supervised lifecycle. For Pi outside Orca without a subagent tool, run documented one-shot `pi --print --no-session` processes concurrently with separate private outputs; wait for every exit and inspect the results. The optional [Pi CLI path](../../vendor/pi/swarm.md) gives a shell recipe. If the host has no usable concurrent worker path, report that limitation rather than doing serial work and calling it a swarm.
+Keep workers within the authorized scope and keep secrets out of their briefs. An initial wave does not authorize unlimited retries, commits, publishing, or deployment.
 
-Start the independent wave before waiting. Preserve the runtime's worker identity and ownership; on uncertain launch or liveness, inspect before retrying or cleaning up. Follow its documented completion and cleanup procedure. Do not expand scope or send secrets to workers. A dependency waits for an accepted, accessible result, not a completion claim.
+## Run
 
-## Aggregate and report
+Before launch, follow the [worker runtime reference](references/workers.md) to choose a concurrent worker path and its lifecycle procedure. Start the independent wave before waiting. Preserve each worker's identity and ownership. Inspect uncertain launches or liveness before retrying or cleaning up. Start dependent work only after accepting an accessible result.
 
-Wait until each expected attempt completes or its state is positively established; a timeout is not proof of exit. Inspect actual outputs, changes, and checks. For coverage, label each slice `PASS`, `ISSUES`, or `BLOCKED` with evidence; missing or inconclusive evidence is a **gap**. For a race, apply the declared selection rule only to comparable results. Review code changes, reconcile overlaps through the assigned owner, and run combined checks on the integrated revision before claiming the whole outcome.
+## Verify and report
 
-Return one concise table with worker/slice, source revision, verdict, evidence, and issue or gap. Include the race rule if relevant, combined-check result, unresolved risks, and next owner. Separate worker claims from independently verified facts; do not paste raw transcripts. For a plan-only request, state that no workers were launched.
+Account for every worker until it completes or its state is positively established. A timeout is not proof of exit. Inspect outputs and evidence. For coverage, label each slice `PASS`, `ISSUES`, or `BLOCKED`. Missing, inaccessible, or inconclusive evidence is a gap, not a pass.
+
+Return one concise report with coverage verdicts, supporting evidence, gaps, unresolved risks, and the next owner of unfinished work. Separate worker claims from facts you verified. Summarize findings instead of pasting transcripts. Use a table when it helps comparison.
+
+## When workers edit code
+
+Use [verification-readiness](../verification-readiness/SKILL.md) before dispatch to select a relevant check, establish readiness in the worker's environment, and define the required evidence. Include each worker's checked revision, exact checks, results, and gaps in the report.
+
+Choose an integration owner before launch. Check for conflicts in files, lockfiles, configuration, and generated output. Isolate overlapping writers and competing implementations in separate accessible workspaces. Assign shared edits to one owner or sequence them.
+
+Review changes and reconcile overlaps through the integration owner. Run combined checks on the integrated revision before claiming success, and report that revision and result.
+
+## When workers compete
+
+Give competing workers the same task, comparable starting snapshots, and the same pass condition. Mixed batches may combine coverage slices with competing attempts. Before launch, declare the comparison criteria and a selection rule:
+
+- `first pass` selects the first candidate you verify meets the pass condition.
+- `rank all` ranks all comparable candidates using the declared criteria.
+- `best-of` combines useful parts of comparable results and verifies the combined result.
+
+Report the selection rule and outcome. If no candidate or combined result passes, report that. Selecting a winner leaves you responsible for the other workers. Follow the host's completion or cancellation procedure for every outstanding worker before the final report.
 
 Review [tests/review.md](tests/review.md) when changing this skill. Its scenarios are instruction checks, not a live swarm evaluation.

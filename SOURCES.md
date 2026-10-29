@@ -36,7 +36,7 @@ imports:
       skills/tdd:
       skills/unslop: Copied from the local installation and verified byte-for-byte against upstream at this revision.
       skills/benchmark-checklist: Adds macOS commands and removes playbook dependencies.
-      skills/swarm: Makes the swarm workflow portable; uses the host's worker facility and preserves Orca's supervised path.
+      skills/swarm: Makes the workflow portable and defaults to coverage. Separates code editing and race rules from the common workflow, moves runtime guidance to a reference while preserving Orca supervision and the Pi path, scales evidence to the task, makes report tables optional, and requires completion or cancellation of outstanding race workers after selecting a winner.
 ```
 
 The `html-report` inspiration at Matt Pocock revision `5beb35b040e3de97e54fa9e386d7e42d15c295c2`: [architecture skill](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/SKILL.md), [HTML report guidance](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/HTML-REPORT.md), and [design it twice](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/codebase-design/DESIGN-IT-TWICE.md). The local skill generalizes their content principles; the original MIT license is retained.
