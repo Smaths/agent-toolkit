@@ -52,6 +52,33 @@ class CheckTests(unittest.TestCase):
                 self.write("skills/example/SKILL.md", content)
                 self.assertTrue(checks.check_skills(self.root, self.files()))
 
+    def test_frontmatter_length_boundaries(self):
+        for field, limit in (("name", 64), ("description", 1024), ("compatibility", 500)):
+            for length in (limit, limit + 1):
+                with self.subTest(field=field, length=length):
+                    data = {"name": "example", "description": "A useful skill"}
+                    data[field] = "a" * length
+                    path = self.write(
+                        f"skills/{data['name']}/SKILL.md",
+                        "---\n" + checks.yaml.safe_dump(data) + "---\nDo the task.\n",
+                    )
+                    errors = checks.check_skills(self.root, [path])
+                    if length == limit:
+                        self.assertEqual(errors, [])
+                    else:
+                        self.assertTrue(any(field in error and str(limit) in error for error in errors))
+
+    def test_compatibility_requires_nonempty_string_when_present(self):
+        for value in (None, False, 42, [], ["python"], {}, "", "   "):
+            with self.subTest(value=value):
+                data = {"name": "example", "description": "A useful skill", "compatibility": value}
+                path = self.write(
+                    "skills/example/SKILL.md",
+                    "---\n" + checks.yaml.safe_dump(data) + "---\nDo the task.\n",
+                )
+                errors = checks.check_skills(self.root, [path])
+                self.assertTrue(any("compatibility must be a nonempty string" in error for error in errors))
+
     def test_name_location_and_boolean_validation(self):
         for name in ("Wrong", "wrong_name", "double--hyphen", "other", "''"):
             with self.subTest(name=name):
@@ -245,6 +272,36 @@ imports:
     def test_yaml_merges_remain_supported(self):
         self.write("merge.yaml", "base: &base\n  a: 1\ncopy:\n  <<: *base\n  a: 2\n")
         self.assertEqual(checks.check_syntax(self.root, self.files()), [])
+
+    def test_static_mode_checks_files_without_running_suites(self):
+        subprocess.run(["git", "init", "-q", str(self.root)], check=True)
+        self.skill()
+        self.registry("local: [skills/example]\nimports: []")
+        marker = self.root / "suite-ran.txt"
+        self.write("bin/test_check.py", f"from pathlib import Path\nPath({str(marker)!r}).touch()\n")
+        for content, expected in (("# Valid\n", 0), ("[broken](missing.md)\n", 1)):
+            with self.subTest(expected=expected):
+                self.write("README.md", content)
+                stdout, stderr = StringIO(), StringIO()
+                with patch.object(checks, "ROOT", self.root), \
+                     patch.object(checks.sys, "argv", ["bin/check", "--static"]), \
+                     redirect_stdout(stdout), redirect_stderr(stderr):
+                    self.assertEqual(checks.main(), expected)
+                self.assertFalse(marker.exists())
+                self.assertNotIn("Running ", stdout.getvalue())
+                for name in ("check_skills", "check_links", "check_sources", "check_syntax"):
+                    self.assertIn(f"{name}:", stdout.getvalue())
+                if expected:
+                    self.assertIn("README.md: missing local target: missing.md", stderr.getvalue())
+                else:
+                    self.assertEqual(stderr.getvalue(), "")
+
+    def test_unknown_check_arguments_are_rejected(self):
+        for arguments in (["--unknown"], ["--static", "--unknown"]):
+            with self.subTest(arguments=arguments), \
+                 patch.object(checks.sys, "argv", ["bin/check", *arguments]):
+                with self.assertRaisesRegex(SystemExit, r"Usage: bin/check \[--static\]"):
+                    checks.main()
 
     def test_file_discovery_includes_untracked_but_not_ignored_files(self):
         subprocess.run(["git", "init", "-q", str(self.root)], check=True)

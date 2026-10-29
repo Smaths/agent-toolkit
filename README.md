@@ -43,4 +43,6 @@ bin/check
 
 It checks skill layout and frontmatter, local Markdown links and anchors, [attribution](SOURCES.md), Python/Bash/JSON/YAML syntax, and the offline test suites. Git-tracked and untracked files are checked; ignored environments and generated files are excluded. Use Markdown links for supporting files. Code examples and external URLs are not link-checked.
 
+For static validation without running test suites, use `bin/check --static`.
+
 The checks run offline after dependency setup. Sync tests use temporary homes and also run in Debian CI. They do not enable tools or evaluate model behavior. Status-line tests are included. For opt-in handoff integration checks, see [session-handoff/tests](skills/session-handoff/tests/README.md).

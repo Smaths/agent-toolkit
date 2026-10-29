@@ -73,9 +73,13 @@ def check_skills(root, files):
             data, body = frontmatter((root / path).read_text())
             if not isinstance(data, dict):
                 raise ValueError("SKILL.md needs YAML mapping frontmatter")
-            for field in ("name", "description"):
+            for field, limit in (("name", 64), ("description", 1024), ("compatibility", 500)):
+                if field == "compatibility" and field not in data:
+                    continue
                 if not isinstance(data.get(field), str) or not data[field].strip():
                     raise ValueError(f"{field} must be a nonempty string")
+                if len(data[field]) > limit:
+                    raise ValueError(f"{field} must be at most {limit} characters")
             name = data["name"]
             if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
                 raise ValueError("name must use lowercase letters, numbers, and single hyphens")
@@ -301,8 +305,9 @@ def repository_files(root):
 
 
 def main():
-    if len(sys.argv) != 1:
-        raise SystemExit("Usage: bin/check")
+    arguments = sys.argv[1:]
+    if arguments not in ([], ["--static"]):
+        raise SystemExit("Usage: bin/check [--static]")
     files = repository_files(ROOT)
     errors = []
     for check in (check_skills, check_links, check_sources, check_syntax):
@@ -311,6 +316,8 @@ def main():
         errors.extend(found)
     if errors:
         print("\n".join(dict.fromkeys(errors)), file=sys.stderr)
+    if arguments == ["--static"]:
+        return int(bool(errors))
     # Enumerate suites explicitly: discovering and executing arbitrary imported tests
     # would run unreviewed workflows. Each of these suites is offline and isolated.
     suites = [
