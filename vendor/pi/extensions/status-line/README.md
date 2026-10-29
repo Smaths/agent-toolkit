@@ -30,7 +30,13 @@ Do not use `bin/sync.sh` to enable Pi packages; it manages other agent resources
 - A context bar with used and total tokens. It turns yellow at 50% and red at 80%.
 - The recorded total cost of the session so far, including prior branches and compaction.
 
-This fork shows `?` rather than a false 0% when context usage is unknown after compaction and preserves extension status text. It uses Pi's `setFooter` API; the new package path does not update existing Pi settings automatically. On narrow terminals it hides the branch, then model, before shortening the context gauge. It replaces Pi's default footer: cwd/session name, cache counters, auto-compaction indicator and virtual-model route are not displayed.
+This fork shows `?` rather than a false 0% when context usage is unknown after compaction and preserves extension status text. It uses Pi's `setFooter` API; the new package path does not update existing Pi settings automatically. The `CTX:` label is never shown. As the terminal narrows, it drops the provider first, then the branch, shortens the gauge, and drops thinking. At the narrowest widths it removes the gauge before shortening the model ID, keeping used/maximum tokens, percentage, and cost (for example, at 40 columns: `model-id │ 50.0k/200.0k (25%) │ $1.234`). Below that, it reduces separator padding and then shortens the model ID; when the figures cannot fit, it shows the model ID alone. It replaces Pi's default footer: cwd/session name, cache counters, auto-compaction indicator and virtual-model route are not displayed.
+
+## Offline layout check
+
+```bash
+node --test vendor/pi/extensions/status-line/tests/layout.test.mjs
+```
 
 ## License
 

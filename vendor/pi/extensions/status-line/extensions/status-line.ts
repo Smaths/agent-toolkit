@@ -1,8 +1,6 @@
 import type { ExtensionAPI, SessionEntry } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-
-const BAR_WIDTH = 20;
-const MIN_BAR_WIDTH = 5;
+import { layoutFooter } from "./layout.ts";
 
 // Match Pi's session totals: branch changes and compaction do not refund prior requests.
 function entryCost(entry: SessionEntry): number {
@@ -58,20 +56,16 @@ export default function (pi: ExtensionAPI) {
 					const branchSeg = theme.fg("mdLink", branch ? `⎇ ${branch}` : "no git");
 					// The thinking level only means something for models that can think
 					const thinking = ctx.model?.reasoning ? theme.fg("muted", ` · ${pi.getThinkingLevel()}`) : "";
-					const modelSeg = theme.fg("accent", `${ctx.model?.provider ?? "?"}/${ctx.model?.id ?? "none"}`) + thinking;
+					const modelSeg = theme.fg("accent", `${ctx.model?.provider ?? "?"}/${ctx.model?.id ?? "none"}`);
 					const contextSeg = (barSize: number) =>
-						theme.fg("muted", "CTX: [") + bar(barSize) + theme.fg("muted", "] ") +
-						theme.fg("mdCode", `${used == null ? "?" : fmtTokens(used)}/${fmtTokens(contextWindow)}`) +
-						theme.fg(known ? barColor : "muted", ` (${known ? pct.toFixed(0) : "?"}%)`);
+						(barSize ? theme.fg("muted", "[") + bar(barSize) + theme.fg("muted", "] ") : "") +
+						theme.fg("mdCode", `${used == null ? "?" : fmtTokens(used)}/${fmtTokens(contextWindow)}`) + " " +
+						theme.fg(known ? barColor : "muted", `(${known ? pct.toFixed(0) : "?"}%)`);
 					const costSeg = theme.fg("success", `$${cost.toFixed(3)}`);
 					const sep = theme.fg("dim", " │ ");
-					// Reserve space for context and cost first. Omit branch, then model, before hiding the gauge.
-					let barSize = BAR_WIDTH;
-					const essentials = (size: number) => `${contextSeg(size)}${sep}${costSeg}`;
-					barSize = Math.max(MIN_BAR_WIDTH, BAR_WIDTH - Math.max(0, visibleWidth(essentials(BAR_WIDTH)) - width));
-					let line = essentials(barSize);
-					if (visibleWidth(`${branchSeg}${sep}${modelSeg}${sep}${line}`) <= width) line = `${branchSeg}${sep}${modelSeg}${sep}${line}`;
-					else if (visibleWidth(`${modelSeg}${sep}${line}`) <= width) line = `${modelSeg}${sep}${line}`;
+					const line = layoutFooter({ width, branch: branchSeg, model: modelSeg,
+						compactModel: theme.fg("accent", ctx.model?.id ?? "none"), thinking, context: contextSeg,
+						cost: costSeg, sep, visibleWidth, truncateToWidth });
 					const statuses = [...footerData.getExtensionStatuses().entries()].sort(([a], [b]) => a.localeCompare(b))
 						.map(([, text]) => text.replace(/[\r\n\t\x00-\x1f\x7f]/g, " ").trim()).filter(Boolean);
 					return [truncateToWidth(line, width), ...(statuses.length ? [truncateToWidth(statuses.join(" "), width)] : [])];
