@@ -2,7 +2,7 @@
 
 Imported tools are local forks. Keep upstream licenses alongside them and record substantive adaptations below. Upstream updates are optional.
 
-The YAML registry is checked by `bin/check`. Declare every skill and Claude mod as local or imported. Import entries require an author, source URL, revision, license, and artifact paths (a list or a mapping with optional local-change notes). Record substantive adaptations. Each imported directory must retain its `LICENSE`.
+The YAML registry is checked by `bin/check`. Declare every skill as local or imported, and record imported tools. Import entries require an author, source URL, revision, license, and artifact paths (a list or a mapping with optional local-change notes). Record substantive adaptations. Each imported directory must retain its `LICENSE`.
 
 ```yaml
 local:
@@ -26,9 +26,8 @@ imports:
     revision: "e5ed6372bbf82e7bcb61902b0c11a7e2514efae0"
     license: MIT
     artifacts:
-      vendor/pi/extensions/pi-context-bar: Caches total session cost across render frames; distinguishes unknown context usage; orders the footer as branch, model, context, and cost; and prioritizes context/cost on narrow terminals.
-      vendor/claude/statusline: Ports the local Pi-style ctx layout to Claude's documented JSON-in/ANSI-out status-line API with Python and optional Git. Preserves unknown context, counts cache tokens without output tokens, sizes to COLUMNS, and optionally forwards input to an existing telemetry command. Adds offline rendering, worktree, and forwarding tests.
-      vendor/claude/mods/ctx: Adapts the local Pi context-bar layout into the existing locally authored Claude Code mod. Uses Claude session usage and AbovePrompt elements, retains unknown usage without a breakdown estimate, budgets Unicode width conservatively without Pi dependencies, and adds lifecycle and layout tests. Does not port Pi thinking levels or extension statuses.
+      vendor/pi/extensions/status-line: Renames the upstream pi-context-bar package and extension to status-line; caches total session cost across render frames, distinguishes unknown context usage, orders the footer as branch, model, context, and cost, and prioritizes context/cost on narrow terminals.
+      vendor/claude/status-line: Adapts Thomas van Dongen's MIT-licensed context layout to Claude's documented JSON-in/ANSI-out status-line API with Python and optional Git. Preserves unknown context, displays Claude's reported effort beside the model, counts cache tokens without output tokens, sizes to COLUMNS with branch/context/cost priority on narrow panes, and optionally forwards input to an existing telemetry command. Adds offline rendering, worktree, and forwarding tests; renamed from statusline/ctx.py.
   - author: Poteto
     source: https://github.com/cursor/plugins/tree/main/pstack
     revision: "e73df47" # Upstream revision dated 2026-10-23

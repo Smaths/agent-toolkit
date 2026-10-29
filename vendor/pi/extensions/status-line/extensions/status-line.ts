@@ -60,7 +60,7 @@ export default function (pi: ExtensionAPI) {
 					const thinking = ctx.model?.reasoning ? theme.fg("muted", ` · ${pi.getThinkingLevel()}`) : "";
 					const modelSeg = theme.fg("accent", `${ctx.model?.provider ?? "?"}/${ctx.model?.id ?? "none"}`) + thinking;
 					const contextSeg = (barSize: number) =>
-						theme.fg("muted", "Context: [") + bar(barSize) + theme.fg("muted", "] ") +
+						theme.fg("muted", "CTX: [") + bar(barSize) + theme.fg("muted", "] ") +
 						theme.fg("mdCode", `${used == null ? "?" : fmtTokens(used)}/${fmtTokens(contextWindow)}`) +
 						theme.fg(known ? barColor : "muted", ` (${known ? pct.toFixed(0) : "?"}%)`);
 					const costSeg = theme.fg("success", `$${cost.toFixed(3)}`);

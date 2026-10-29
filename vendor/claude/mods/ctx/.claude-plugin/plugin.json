@@ -1,7 +1,0 @@
-{
-  "name": "ctx",
-  "version": "0.4.0",
-  "description": "A Pi-style context gauge above the prompt with branch, model, token counts and session cost",
-  "license": "MIT",
-  "types": "./types/index.d.ts"
-}

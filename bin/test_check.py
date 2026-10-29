@@ -224,7 +224,7 @@ imports:
             "bin/test_sync.py",
             "skills/html-report/tests/test_embed_css.py",
             "skills/session-handoff/tests/test_check_handoff.py",
-            "vendor/claude/statusline/tests/test_ctx.py",
+            "vendor/claude/status-line/tests/test_status_line.py",
         )
         for suite in suites:
             self.write(suite, f"from pathlib import Path\n"

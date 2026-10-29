@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Pi-style Claude Code status line. JSON on stdin; ANSI text on stdout."""
-# Layout adapted from Thomas van Dongen's MIT-licensed pi-context-bar.
+"""Claude Code status line. JSON on stdin; ANSI text on stdout."""
+# Context layout adapted from Thomas van Dongen's MIT-licensed work.
 
 import argparse
 import json
@@ -105,10 +105,10 @@ def segments(data, branch, width):
     cost = number(obj(data.get("cost")).get("total_cost_usd"))
     cost_parts = [] if cost is None else [separator, ("success", f"${cost:.3f}")]
 
-    def essentials(size):
+    def essentials(size, label):
         filled = math.floor((percent or 0) / 100 * size + 0.5)
         pct = "?" if percent is None else str(math.floor(percent + 0.5))
-        return [("dim", "Context: ["), (color, "█" * filled),
+        return [("dim", "CTX: [" if label else "["), (color, "█" * filled),
                 ("dim", "░" * (size - filled)), ("dim", "] "),
                 (None, f"{fmt_tokens(tokens)}/{fmt_tokens(window)}"),
                 (color, f" ({pct}%)"), *cost_parts]
@@ -116,18 +116,35 @@ def segments(data, branch, width):
     def size_of(parts):
         return sum(columns(text) for _, text in parts)
 
-    size = max(5, 20 - max(0, size_of(essentials(20)) - width))
-    parts = essentials(size)
     model = obj(data.get("model"))
     model_part = ("model", clean(model.get("display_name")) or clean(model.get("id")) or "?")
+    effort = clean(obj(data.get("effort")).get("level"))
+    model_parts = [model_part] + ([("dim", f" · {effort}")] if effort else [])
     branch_part = ("branch", f"⎇ {clean(branch)}" if branch else "no git")
-    for prefix in ([branch_part, separator, model_part, separator], [model_part, separator]):
-        if size_of(prefix + parts) <= width:
-            parts = prefix + parts
-            break
+    branch_prefix = [branch_part, separator]
+    full_prefix = [*branch_prefix, *model_parts, separator]
+    # Keep the branch and measured figures. The narrow gauge starts at half
+    # the wide gauge's 20 cells; then lose the model and shrink to five cells.
+    for parts in ([*full_prefix, *essentials(20, True)],
+                  [*full_prefix, *essentials(10, False)],
+                  *([*branch_prefix, *essentials(size, False)] for size in range(10, 4, -1))):
+        if size_of(parts) <= width:
+            return parts
+
+    parts = essentials(5, False)
+    branch_budget = width - size_of(parts) - size_of([separator])
+    if branch_budget >= 3:
+        left = branch_budget - 1  # Reserve one column for the branch ellipsis.
+        shortened = ""
+        for c in branch_part[1]:
+            if columns(c) > left:
+                break
+            shortened += c
+            left -= columns(c)
+        return [("branch", shortened + "…"), separator, *parts]
     if size_of(parts) <= width:
         return parts
-    # Last resort at widths too small for even the five-cell gauge.
+    # Last resort when even the five-cell gauge and figures cannot fit.
     left = width - 1
     clipped = []
     for style, text in parts:

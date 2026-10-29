@@ -11,8 +11,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-SCRIPT = Path(__file__).resolve().parents[1] / "ctx.py"
-spec = importlib.util.spec_from_file_location("ctx_statusline", SCRIPT)
+SCRIPT = Path(__file__).resolve().parents[1] / "status-line.py"
+spec = importlib.util.spec_from_file_location("claude_status_line", SCRIPT)
 ctx = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(ctx)
 
@@ -31,7 +31,20 @@ SAMPLE = {
 class StatusLineTests(unittest.TestCase):
     def test_wide_layout(self):
         self.assertEqual(ctx.render(SAMPLE, "main", 120, color=False),
-                         "⎇ main │ Opus │ Context: [█████░░░░░░░░░░░░░░░] 50.0k/200.0k (25%) │ $1.234")
+                         "⎇ main │ Opus │ CTX: [█████░░░░░░░░░░░░░░░] 50.0k/200.0k (25%) │ $1.234")
+
+    def test_effort_beside_model_and_unknown_omitted(self):
+        for level in ["low", "high", "max"]:
+            data = {**SAMPLE, "effort": {"level": level}}
+            self.assertIn(f"Opus · {level} │ CTX:", ctx.render(data, "main", 120, False))
+            self.assertIn(ctx.COLORS["dim"] + f" · {level}" + ctx.RESET,
+                          ctx.render(data, "main", 120))
+        for effort in [None, {}, {"level": None}, {"level": 123}]:
+            data = {**SAMPLE, "effort": effort}
+            self.assertIn("Opus │ CTX:", ctx.render(data, "main", 120, False))
+        width = ctx.columns("Opus │ CTX: [█████░░░░░░░░░░░░░░░] 50.0k/200.0k (25%) │ $1.234")
+        self.assertNotIn("Opus · high", ctx.render({**SAMPLE, "effort": {"level": "high"}},
+                                                       "main", width, False))
 
     def test_thresholds_and_rounding(self):
         for percent, color, filled in [(0, "success", 0), (49, "success", 10),
@@ -79,13 +92,29 @@ class StatusLineTests(unittest.TestCase):
         data["cost"] = {"total_cost_usd": 0}
         self.assertIn("$0.000", ctx.render(data, None, 120, color=False))
 
-    def test_narrow_layout_priority(self):
-        essential = "Context: [█████░░░░░░░░░░░░░░░] 50.0k/200.0k (25%) │ $1.234"
-        width = ctx.columns(essential)
-        self.assertEqual(ctx.render(SAMPLE, "main", width + 7, False), "Opus │ " + essential)
-        self.assertEqual(ctx.render(SAMPLE, "main", width, False), essential)
-        self.assertIn("[███░░░░░░░]", ctx.render(SAMPLE, "main", width - 10, False))
-        self.assertIn("$1.234", ctx.render(SAMPLE, "main", width - 10, False))
+    def test_narrow_layout_keeps_branch_context_figures_and_cost(self):
+        # The unlabeled narrow gauge starts at half the wide gauge's 20 cells.
+        essential = "[███░░░░░░░] 50.0k/200.0k (25%) │ $1.234"
+        with_model = "⎇ main │ Opus │ " + essential
+        without_model = "⎇ main │ " + essential
+        self.assertEqual(ctx.render(SAMPLE, "main", ctx.columns(with_model), False), with_model)
+        self.assertEqual(ctx.render(SAMPLE, "main", ctx.columns(without_model), False), without_model)
+        with_effort = {**SAMPLE, "effort": {"level": "high"}}
+        with_effort_layout = "⎇ main │ Opus · high │ " + essential
+        self.assertEqual(ctx.render(with_effort, "main", ctx.columns(with_effort_layout), False),
+                         with_effort_layout)
+        self.assertEqual(ctx.render(with_effort, "main", ctx.columns(without_model), False), without_model)
+        narrower = ctx.render(SAMPLE, "main", ctx.columns(without_model) - 3, False)
+        self.assertIn("⎇ main │ [██░░░░░]", narrower)
+        self.assertIn("50.0k/200.0k (25%) │ $1.234", narrower)
+        self.assertNotIn("CTX:", narrower)
+
+    def test_long_branch_is_shortened_before_context_or_cost_is_lost(self):
+        min_context = "[█░░░░] 50.0k/200.0k (25%) │ $1.234"
+        width = ctx.columns("⎇ … │ " + min_context)
+        result = ctx.render(SAMPLE, "feature/long-worktree-name", width, False)
+        self.assertEqual(result, "⎇ … │ " + min_context)
+        self.assertLessEqual(ctx.columns(result), width)
 
     def test_all_widths_and_unicode(self):
         data = {**SAMPLE, "model": {"display_name": "模型👩‍💻"}}
@@ -107,6 +136,10 @@ class StatusLineTests(unittest.TestCase):
         self.assertNotIn("\n", result)
         self.assertNotIn("evil", result)
         self.assertIn("Opus", result)
+        data["effort"] = {"level": "high\x1b[2J\n"}
+        result = ctx.render(data, None, 120, False)
+        self.assertNotIn("\x1b", result)
+        self.assertNotIn("\n", result)
 
     def test_malformed_shapes(self):
         self.assertIn("?/?", ctx.render({"context_window": []}, None, 120, False))
@@ -145,7 +178,7 @@ class StatusLineTests(unittest.TestCase):
                                     input=payload, text=True, capture_output=True, check=True,
                                     env={**os.environ, "NO_COLOR": "1", "COLUMNS": "120", "CAPTURE": str(received)})
             self.assertEqual(received.read_text(), payload)
-            self.assertIn("no git │ Opus │ Context:", result.stdout)
+            self.assertIn("no git │ Opus │ CTX:", result.stdout)
             self.assertNotIn("must not appear", result.stdout)
             self.assertNotIn("\x1b", result.stdout)
             self.assertEqual(result.stderr, "")

@@ -318,7 +318,7 @@ def main():
         "bin/test_sync.py",
         "skills/html-report/tests/test_embed_css.py",
         "skills/session-handoff/tests/test_check_handoff.py",
-        "vendor/claude/statusline/tests/test_ctx.py",
+        "vendor/claude/status-line/tests/test_status_line.py",
     ]
     failed = bool(errors)
     for suite in suites:
