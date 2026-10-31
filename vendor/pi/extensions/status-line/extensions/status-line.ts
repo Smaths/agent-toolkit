@@ -20,22 +20,36 @@ export default function (pi: ExtensionAPI) {
 	let redraw = () => {};
 	pi.on("thinking_level_select", async () => redraw());
 	pi.on("model_select", async () => redraw());
+	// message_end runs before persistence. Refresh at post-persistence boundaries.
+	pi.on("turn_end", async () => redraw());
+	pi.on("agent_end", async () => redraw());
+	pi.on("session_compact", async () => redraw());
+	pi.on("session_tree", async () => redraw());
+	pi.on("session_shutdown", async () => { redraw = () => {}; });
 
 	pi.on("session_start", async (_event, ctx) => {
 		if (ctx.mode !== "tui") return;
 		ctx.ui.setFooter((tui, theme, footerData) => {
-			redraw = () => tui.requestRender();
 			let cost = 0;
 			let costDirty = true;
-			const unsub = footerData.onBranchChange(() => { costDirty = true; tui.requestRender(); });
+			let costSessionId: string | undefined;
+			let costLeafId: string | null | undefined;
+			redraw = () => { costDirty = true; tui.requestRender(); };
+			const unsub = footerData.onBranchChange(redraw);
 
 			return {
 				dispose: unsub,
-				invalidate() {},
+				invalidate() { costDirty = true; },
 				render(width: number): string[] {
-					if (costDirty) {
+					// Appends move the leaf, including usage saved outside normal turns.
+					// Checking IDs avoids copying/scanning all entries on every render frame.
+					const sessionId = ctx.sessionManager.getSessionId();
+					const leafId = ctx.sessionManager.getLeafId();
+					if (costDirty || sessionId !== costSessionId || leafId !== costLeafId) {
 						cost = 0;
 						for (const e of ctx.sessionManager.getEntries()) cost += entryCost(e);
+						costSessionId = sessionId;
+						costLeafId = leafId;
 						costDirty = false;
 					}
 
