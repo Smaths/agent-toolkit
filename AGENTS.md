@@ -7,6 +7,18 @@ Read [README.md](README.md) before changing this collection for its public overv
 - Reviewing imported instructions does not authorize executing their workflows.
 - Preserve unrelated changes. Report contradictions separately rather than expanding the task.
 
+## Harness documentation
+
+Before adding, changing, or reviewing harness-specific instructions, skills, extensions, configuration, or workflows, look up the **current official documentation** for each affected harness. Use documented best practices rather than remembered APIs or cached guidance:
+
+- **Pi agent harness:** [official documentation index](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/index.md). Read the installed package's `README.md`, relevant `docs/` pages, and examples as well; discover its location from the running environment rather than hard-coding a versioned path.
+- **Codex:** [official Codex CLI documentation](https://developers.openai.com/codex/cli/); follow its links to the relevant configuration, skills, and integration guidance.
+- **Claude Code:** [official documentation](https://code.claude.com/docs/en/overview); use the [documentation index](https://code.claude.com/docs/llms.txt) to find relevant guidance.
+
+Identify the installed or project-pinned version and check the latest released version's relevant docs and release notes. Distinguish released guidance from unreleased default-branch changes. Apply current recommendations compatible with the target version; report version gaps rather than upgrading tools or configuration without authorization.
+
+In the task report, cite the documentation consulted and note the target version and any compatibility constraints. If current docs or version information are unavailable, state that limitation and what local evidence was used; do not claim latest-version compliance.
+
 ## Add to the collection
 
 "Get" or "install" means add to this checkout with attribution. Enable tools on the computer only when separately and explicitly requested. This includes running `bin/sync.sh` or installers and changing links or agent configuration.
