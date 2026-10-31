@@ -12,6 +12,12 @@ local:
   - skills/unslop-for-agents
   - skills/verification-readiness
 imports:
+  - author: Mario Zechner
+    source: https://github.com/earendil-works/pi
+    revision: "v1.4.0"
+    license: MIT
+    artifacts:
+      vendor/pi/extensions/session-handoff: Adapts the native handoff example's fresh-session lifecycle and command bridge. Replaces transcript summarization and editor submission with the portable reference-first brief, private launch records, bounded Git and file inspection, a fail-closed model-tool approval gate, state-drift checks, and offline filesystem/lifecycle tests. Does not install or enable the adapter.
   - author: Matt Pocock
     source: https://github.com/mattpocock/skills
     revision: "5beb35b" # Upstream revision dated 2026-10-19

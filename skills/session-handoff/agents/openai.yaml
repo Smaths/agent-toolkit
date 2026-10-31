@@ -1,4 +1,4 @@
 interface:
   display_name: "Session Handoff"
-  short_description: "Transfer current work to a fresh agent session"
-  default_prompt: "Use $session-handoff to write a checked handoff for the current task and transfer it to a fresh session. Keep the same workspace, agent, provider, model, and reasoning level unless I specify overrides."
+  short_description: "Fresh session: validate, propose, then await approval"
+  default_prompt: "Use $session-handoff to write a reference-first restart brief and transfer it to a fresh session. Keep the same workspace and agent settings unless I specify overrides. The receiver should validate actual state, retrieve only necessary linked context, present a concise next-step proposal, and wait for my fresh approval before task work."

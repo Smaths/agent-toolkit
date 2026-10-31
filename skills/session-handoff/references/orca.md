@@ -17,6 +17,8 @@ Follow the version-matched guide for command syntax, receipts, and recovery. Thi
 
 Use `agent launch` for the resolved existing workspace, or `worktree create --agent` for a requested new worktree. Use explicit host and workspace selection where needed. Do not create coordinator tasks or use orchestration dispatch for an ownership transfer.
 
+The initial prompt must start validation and an approval proposal, not task execution. Unless the selected runtime provides a verified tool gate, this is an instruction-only approval boundary; report that limitation. The native Pi adapter is a different, same-terminal path, not an Orca launch fallback.
+
 Apply [preflight.md](preflight.md) to the selected agent and execution host. `agent launch --help` and `agent-context` expose generic flags, not proof of per-agent forwarding. Express requested settings through Orca's documented options; do not forward native argument strings to it. Never drop requested settings to bypass a refusal.
 
 Record the exact receiving handle, kind, and prompt outcome as described in [recovery.md](recovery.md). The current guide accepts `journaled` or `handed-to-terminal` as delivery, not proof that a turn started or that settings match.
@@ -25,7 +27,7 @@ Record the exact receiving handle, kind, and prompt outcome as described in [rec
 
 Default to a new agent tab and focus it when supported. Orca settings decide whether that tab contains a chat or terminal. A window, tab, and split pane are different destinations.
 
-For a requested split, check agent-launch support. `terminal split` alone does not establish fresh-agent launch or model and prompt delivery. Do not simulate that support by starting a nested agent through `--command`. Explain unsupported placement and obtain agreement before substituting a tab. If split placement is supported, clarify ambiguous orientation; Orca uses `horizontal` for left/right and `vertical` for top/bottom.
+For a requested split, check agent-launch support. `terminal split` alone does not establish fresh-agent launch or model and prompt delivery. Do not simulate that support by starting a nested agent through `--command`. Explain unsupported placement and obtain agreement before substituting a tab. If split placement is supported, clarify ambiguous orientation and read its meaning from the installed guide rather than caching it here.
 
 Leave the source open unless the user requested cleanup. For terminal cleanup, record the source handle and inspect its topology before launch with `terminal list --include-visual-layouts` as supported by the guide.
 

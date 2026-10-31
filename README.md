@@ -18,7 +18,7 @@ Adding a tool to this repository does not enable it on your computer. See [AGENT
 
 ## Checks
 
-With Python 3, Bash, and Git available, install the check dependencies once and run the offline suite:
+With Python 3, Bash, Git, and Node.js 22.19+ available, install the check dependencies once and run the offline suite:
 
 ```bash
 python3 -m venv .venv
@@ -29,4 +29,4 @@ bin/check
 
 CI also runs `bin/check`. It checks skill layout, links, attribution, and syntax, then runs offline tests. For static validation without running test suites, use `bin/check --static`.
 
-The checks do not enable tools or evaluate model behavior. Component READMEs describe additional, opt-in checks.
+The suite includes offline Pi handoff tests using temporary repositories and a mocked runtime. The checks do not enable tools, launch agents, or evaluate model behavior. Component READMEs describe additional, opt-in checks.

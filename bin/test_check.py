@@ -2,6 +2,7 @@
 
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -252,10 +253,16 @@ imports:
             "skills/html-report/tests/test_embed_css.py",
             "skills/session-handoff/tests/test_check_handoff.py",
             "vendor/claude/status-line/tests/test_status_line.py",
+            "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
+            "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
         )
         for suite in suites:
-            self.write(suite, f"from pathlib import Path\n"
-                              f"Path({str(marker)!r}).open('a').write({suite!r} + '\\n')\n")
+            if suite.endswith(".mjs"):
+                self.write(suite, "import { appendFileSync } from 'node:fs';\n"
+                                  f"appendFileSync({json.dumps(str(marker))}, {json.dumps(suite + chr(10))});\n")
+            else:
+                self.write(suite, f"from pathlib import Path\n"
+                                  f"Path({str(marker)!r}).open('a').write({suite!r} + '\\n')\n")
         stdout, stderr = StringIO(), StringIO()
         with patch.object(checks, "ROOT", self.root), \
              patch.object(checks.sys, "argv", ["bin/check"]), \

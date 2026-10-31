@@ -12,13 +12,17 @@ The tests cover missing settings and evidence, custom backend checks, critical c
 
 The helper classifies supplied evidence. These tests cannot prove that the evidence is truthful, that an agent follows the Markdown instructions, or that Orca forwards native settings correctly.
 
+## Receiver behavior
+
+Use [receiver-scenarios.md](receiver-scenarios.md) for reference-first capture, stale state, selective context retrieval, fresh approval, denial, and interruption scenarios. The [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md#verification) adds offline filesystem and mocked-runtime gate tests. These are separate from the Python receipt checks and from live model evaluation. The historical Orca results did not test the new proposal/approval flow.
+
 ## Opt-in live smoke test
 
 Run only when the user explicitly requests live testing and selects a disposable Orca workspace. Do not test in a working task's checkout or change global settings.
 
 For Pi, Claude, and Codex, test each chat/terminal mode the host actually supports. Do not change the user's Chat UI setting to force a mode without approval. Record the host and agent versions, requested settings, actual launch kind, prompt outcome, and independently observable settings. Mark unavailable modes as skipped and unobservable settings as unknown, not passed.
 
-Use a private handoff whose only next action is to read the document, report the workspace and observable agent settings, then stop without editing files, running task commands, or closing anything. Confirm that the receiver is a fresh conversation, can read the file, and sees the expected checkout and task-critical tools. Receiver acknowledgment is appropriate here because the user requested a verification test; ordinary handoffs do not wait for it.
+Use a private handoff whose proposed next action is a harmless, explicitly scoped fixture change. Its Receiver startup must first read the document and required references, report the workspace and observable agent settings, and present a concise proposal. Decline or cancel first and verify no task command or edit occurred. In a separate approved trial, confirm the proposal and check that only the agreed fixture change occurs. Never close anything as part of this test. Confirm that the receiver is a fresh conversation, can read the file, and sees the expected checkout and task-critical tools. Receiver acknowledgment is appropriate here because the user requested a verification test; ordinary handoffs do not wait for it.
 
 Review the recovery record and verify no second agent or prompt was created. Exercise replay only through a documented test facility or an actual ambiguous response; do not interrupt a working runtime to manufacture a failure. Test cleanup separately only with explicit permission and isolated disposable panes. Never apply terminal cleanup to a structured-chat handle.
 

@@ -1,6 +1,8 @@
 # Curated Pi extensions
 
-The [status-line](status-line/README.md) is the only package on this branch. It is a local fork of Thomas van Dongen's [pi-extensions](https://github.com/Pringled/pi-extensions), pinned and attributed in [SOURCES.md](../../../SOURCES.md). Its MIT license and Pi package manifest are alongside the source.
+The [session-handoff](session-handoff/README.md) adapter opens a fresh Pi conversation in the same terminal, loads a reference-first brief, and gates task tools behind state validation and a concise approval dialog. Its offline tests do not launch agents; it is not enabled automatically.
+
+The [status-line](status-line/README.md) package provides a custom footer. It is a local fork of Thomas van Dongen's [pi-extensions](https://github.com/Pringled/pi-extensions), pinned and attributed in [SOURCES.md](../../../SOURCES.md). Its MIT license and Pi package manifest are alongside the source.
 
 It offers a compact context gauge, model/branch, and session cost. The local fork handles unknown usage after compaction, totals all recorded session costs (including compaction and cache warming), and keeps extension status text. It replaces Pi's built-in footer, so the default cwd/session name, cache counters, auto-compaction indicator, and virtual-model route are not shown. It never shows `CTX:`. On narrow terminals it drops the provider first, then the branch, shortens the gauge, drops thinking, and finally removes the gauge to keep the model ID, used/maximum tokens, percentage, and cost; see the [package README](status-line/README.md#what-it-shows) for extreme-width fallbacks.
 

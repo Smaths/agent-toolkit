@@ -1,6 +1,6 @@
 # Launch record and recovery
 
-Before launching, create `<handoff-path>.launch.json` beside the handoff with the same private permissions. Do not put it in the repository by default. Use the preflight fields from [preflight.md](preflight.md) as its initial content, then add:
+For external-process launches, create `<handoff-path>.launch.json` beside the handoff with the same private permissions. The [Pi native adapter](../../../vendor/pi/extensions/session-handoff/README.md#records-and-recovery) owns its different session-replacement record; do not create a second external launch or replay record for it. Do not put it in the repository by default. Use the preflight fields from [preflight.md](preflight.md) as its initial content, then add:
 
 - `created_at`: UTC timestamp.
 - `source`: host, session ID, and handle/kind if known.
@@ -8,6 +8,7 @@ Before launching, create `<handoff-path>.launch.json` beside the handoff with th
 - `result`: operation/retry ID, receiving handle, chat/terminal kind, destination worktree ID/path, and prompt-delivery outcome. Leave unknown values null.
 - `confirmed_settings`: only settings explicitly confirmed by runtime evidence, with that evidence source. Requested settings are not confirmed settings.
 - `cleanup`: whether requested, source identity, and whether performed or left open.
+- `startup_gate`: runtime-enforced, instruction-only, or unknown, with evidence. Delivery, receiver validation, and user approval are separate events; a receipt never establishes approval.
 
 Record only selected fields, not raw environment, configuration, or CLI dumps. Never store authentication tokens or pairing secrets in the arguments. Record a credential/configuration reference instead. If the same authenticated execution context cannot be restored safely, stop rather than constructing a guessed retry. Keep the original prompt unchanged for replay.
 

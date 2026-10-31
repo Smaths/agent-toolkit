@@ -332,6 +332,19 @@ def main():
         print(f"\nRunning {suite}", flush=True)
         result = subprocess.run([sys.executable, "-B", str(ROOT / suite)], cwd=ROOT)
         failed |= result.returncode != 0
+    node_suites = [
+        "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
+        "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
+    ]
+    for suite in node_suites:
+        print(f"\nRunning {suite}", flush=True)
+        try:
+            result = subprocess.run(["node", "--test", str(ROOT / suite)], cwd=ROOT)
+            failed |= result.returncode != 0
+        except FileNotFoundError:
+            print("Node.js 22.19+ is required for Pi handoff checks; see README.md#checks.", file=sys.stderr)
+            failed = True
+            break
     return int(failed)
 
 

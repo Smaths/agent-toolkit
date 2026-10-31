@@ -18,12 +18,12 @@ Check the installed version and model's accepted values. A fuzzy catalog match i
 
 For a manual launch, change to the resolved destination directory in a fresh shell. Quote the prompt and arguments for that shell. Do not use Pi continue/resume/fork options, Claude continue/resume/fork-session options, or Codex resume/fork subcommands. Codex `-c` means configuration; Pi and Claude `-c` means continue. Prefer long flags. Do not add sandbox, approval, or trust bypasses.
 
-Codex configuration reference: https://developers.openai.com/codex/config-reference/. The installed version and destination host remain authoritative.
+For native configuration, consult the [Codex configuration reference](https://developers.openai.com/codex/config-reference/) and [approval/security guidance](https://developers.openai.com/codex/agent-approvals-security), or [Claude Code permissions](https://code.claude.com/docs/en/permissions). Tool-level approval policies are distinct from approval of the handoff's proposed scope. The installed version and destination host remain authoritative; documentation for newer releases is not evidence of local support.
 
 ## Required checks
 
 - `settings`: values are known and compatible with the selected agent/model.
-- `launch`: this host supports a fresh launch with those exact settings for that agent. Check effective sandbox/approval policy too; a read-only prompt does not enforce it.
+- `launch`: this host supports a fresh launch with those exact settings for that agent. Check effective sandbox/approval policy too; a read-only prompt does not enforce it. Record whether the receiver's startup gate is runtime-enforced, instruction-only, or unknown. Report instruction-only enforcement; if the user requires a hard gate, lack of one blocks launch. Never add bypass flags to make startup automatic.
 - `prompt`: the launch carries an initial prompt and reports acceptance or delivery.
 - `placement`: the requested placement is supported or the user approved a specific alternative.
 - `handoff_access`: the receiver can read the document at its destination path.
