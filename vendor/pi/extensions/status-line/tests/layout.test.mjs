@@ -18,22 +18,49 @@ const options = {
 };
 const render = (width, overrides = {}) => layoutFooter({ ...options, ...overrides, width });
 
-test("omits CTX at every width and removes provider before branch", () => {
-	const full = render(120);
-	assert.match(full, /^⎇ main │ provider\/model-id · high │ \[/);
-	const noProvider = render(widthOf(full) - 1);
-	assert.match(noProvider, /^⎇ main │ model-id · high │ \[/);
-	const noBranch = render(75);
-	assert.match(noBranch, /^model-id · high │ \[/);
-	for (let width = 0; width <= 120; width++) assert.doesNotMatch(render(width), /CTX:/);
+test("drops the visual gauge before any text and never reintroduces it at narrower widths", () => {
+	for (const overrides of [{}, { gitStatus: "M3 A1 ?2" }]) {
+		const full = render(160, overrides);
+		assert.match(full, /\[█{20}\]/);
+		const noGauge = full.replace(context(20), context(0));
+		for (let width = widthOf(noGauge); width < widthOf(full); width++) {
+			assert.equal(render(width, overrides), noGauge, `width ${width}: only the gauge should disappear`);
+		}
+		for (let width = 0; width < widthOf(full); width++) {
+			const line = render(width, overrides);
+			assert.doesNotMatch(line, /\[|\]|CTX:/, `width ${width}`);
+			assert.ok(widthOf(line) <= width, `width ${width}`);
+		}
+		assert.equal(render(widthOf(full), overrides), full, "widening restores the full gauge");
+	}
 });
 
-test("drops thinking and then the bar, keeping model, token counts, percentage and price", () => {
-	assert.match(render(65), /^model-id · high │ \[█+\] 50\.0k\/200\.0k \(25%\) │ \$1\.234$/);
-	assert.equal(render(50), "model-id │ [█████████] 50.0k/200.0k (25%) │ $1.234");
-	assert.equal(render(42), "model-id [█████] 50.0k/200.0k (25%) $1.234");
-	assert.equal(render(40), "model-id │ 50.0k/200.0k (25%) │ $1.234");
-	assert.equal(render(39), "model-id │ 50.0k/200.0k (25%) │ $1.234");
+test("after the gauge, drops provider, thinking, branch name and Git counts in that order", () => {
+	for (const gitStatus of ["", "M3 A1 ?2"]) {
+		const overrides = { gitStatus };
+		const git = `⎇ main${gitStatus ? ` ${gitStatus}` : ""}`;
+		const fullText = `${git} │ provider/model-id · high │ ${context(0)} │ $1.234`;
+		const noProvider = `${git} │ model-id · high │ ${context(0)} │ $1.234`;
+		const noThinking = `${git} │ model-id │ ${context(0)} │ $1.234`;
+		const noBranch = `${gitStatus ? `${gitStatus} │ ` : ""}model-id │ ${context(0)} │ $1.234`;
+		assert.equal(render(widthOf(fullText), overrides), fullText);
+		assert.equal(render(widthOf(fullText) - 1, overrides), noProvider);
+		assert.equal(render(widthOf(noProvider) - 1, overrides), noThinking);
+		assert.equal(render(widthOf(noThinking) - 1, overrides), noBranch);
+		if (gitStatus) {
+			const noCounts = `model-id │ ${context(0)} │ $1.234`;
+			assert.equal(render(widthOf(noBranch) - 1, overrides), noCounts);
+		}
+		for (let width = 0; width < widthOf(noProvider); width++) {
+			assert.doesNotMatch(render(width, overrides), / · high/, `width ${width}: thinking must stay hidden`);
+		}
+	}
+});
+
+test("retains model, numeric context and price after dropping Git and thinking", () => {
+	const noThinking = `model-id │ ${context(0)} │ $1.234`;
+	assert.equal(render(40), noThinking);
+	assert.equal(render(39), noThinking);
 });
 
 test("shortens model only below the width required for the bar-free layout", () => {
