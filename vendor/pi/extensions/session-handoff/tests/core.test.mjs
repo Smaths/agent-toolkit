@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile, writeFile, symlink, stat } from "node:fs/promises";
+import { mkdir, readFile, writeFile, symlink, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fixture } from "./helpers.mjs";
-import { captureWorkspace, readScoped, prepareTransfer, writeRecord, sameState, proposalText, workspaceDiff } from "../core.mjs";
+import { captureWorkspace, readScoped, prepareTransfer, writeRecord, updateReceiverRecord, sameState, proposalText, workspaceDiff } from "../core.mjs";
 
 
 test("snapshot detects staged, unstaged and untracked content drift", async t => {
@@ -55,6 +55,41 @@ test("reader resolves workspace paths, pages text and rejects escape/symlink/dev
   await assert.rejects(readScoped(scope, "lines", 0, 1), /range/i);
 });
 
+test("explicit local read grants allow only the canonical file or directory subtree", async t => {
+  const { cwd, home, brief } = await fixture(t);
+  const scope = { workspace: cwd, brief };
+  const docs = join(home, "documentation with spaces");
+  const file = join(docs, "README.md");
+  const other = join(home, "documentation with spaces-other");
+  await mkdir(docs);
+  await mkdir(other);
+  await writeFile(file, "allowed\nsecond line\n");
+  await writeFile(join(docs, "neighbor.md"), "neighbor");
+  await writeFile(join(other, "private.md"), "private");
+  await assert.rejects(readScoped(scope, file), /scope/);
+  const fileGrant = [{ path: file, kind: "file" }];
+  assert.equal((await readScoped(scope, file, 2, 1, fileGrant)).text, "second line");
+  await assert.rejects(readScoped(scope, join(docs, "neighbor.md"), 1, 160, fileGrant), /scope/);
+  const directoryGrant = [{ path: docs, kind: "directory" }];
+  assert.equal((await readScoped(scope, join(docs, "neighbor.md"), 1, 160, directoryGrant)).text, "neighbor");
+  await assert.rejects(readScoped(scope, join(other, "private.md"), 1, 160, directoryGrant), /scope/);
+  await symlink(other, join(docs, "escape"), "junction");
+  await assert.rejects(readScoped(scope, join(docs, "escape", "private.md"), 1, 160, directoryGrant), /scope/);
+  await assert.rejects(readScoped(scope, docs, 1, 160, directoryGrant), /regular/);
+  await writeFile(join(docs, "binary"), Buffer.from([0]));
+  await assert.rejects(readScoped(scope, join(docs, "binary"), 1, 160, directoryGrant), /text/);
+  await writeFile(join(docs, "large"), Buffer.alloc(2 * 1024 * 1024 + 1, "x"));
+  await assert.rejects(readScoped(scope, join(docs, "large"), 1, 160, directoryGrant), /limit/);
+  await assert.rejects(readScoped(scope, file, 1, 201, directoryGrant), /range/);
+});
+
+test("startup reads report unsupported URLs without treating them as workspace paths", async t => {
+  const { cwd, brief } = await fixture(t);
+  for (const url of ["https://example.invalid/docs", "file:///external/docs"]) {
+    await assert.rejects(readScoped({ workspace: cwd, brief }, url), /URLs are not supported/);
+  }
+});
+
 test("transfer copies brief privately outside repository and records exact settings", async t => {
   const { cwd, home, brief } = await fixture(t);
   const settings = { provider: "test", model: "exact-model", reasoning: "high" };
@@ -69,6 +104,28 @@ test("transfer copies brief privately outside repository and records exact setti
   assert.equal(JSON.parse(await readFile(transfer.record, "utf8")).status, "attempted");
   await writeRecord(transfer, { status: "delivered", receiver: "new-session" });
   assert.equal(JSON.parse(await readFile(transfer.record, "utf8")).receiver, "new-session");
+});
+
+test("receiver record updates preserve launch metadata and refuse mismatched or corrupt records", async t => {
+  const { cwd, home, brief } = await fixture(t);
+  const transfer = await prepareTransfer({ cwd, brief, settings: { provider: "p", model: "m", reasoning: "high" }, sourceSession: "source", tools: [], stateHome: join(home, "state") });
+  const created = { status: "created", receiver: "receiver", confirmedSettings: transfer.settings };
+  await writeRecord(transfer, created);
+  assert.equal(await updateReceiverRecord(transfer, "receiver", () => undefined), false);
+  await updateReceiverRecord({ ...transfer, phase: "approved", approval: { proposal: "not launch metadata" } }, "receiver", () => ({ status: "delivered" }));
+  const updated = JSON.parse(await readFile(transfer.record, "utf8"));
+  assert.deepEqual(updated.confirmedSettings, transfer.settings);
+  assert.equal(updated.phase, "pending");
+  assert.equal(updated.approval, undefined);
+  for (const key of ["version", "id", "directory", "record", "brief", "briefHash", "workspace", "sourceSession", "receiver", "status"]) {
+    await writeRecord(transfer, { ...created, [key]: "mismatched" });
+    const original = await readFile(transfer.record, "utf8");
+    await assert.rejects(updateReceiverRecord(transfer, "receiver", () => ({ status: "delivered" })), /record/);
+    assert.equal(await readFile(transfer.record, "utf8"), original);
+  }
+  await writeFile(transfer.record, "not JSON");
+  await assert.rejects(updateReceiverRecord(transfer, "receiver", () => ({ status: "delivered" })));
+  assert.equal(await readFile(transfer.record, "utf8"), "not JSON");
 });
 
 test("transfer rejects missing settings and state directory inside workspace", async t => {
@@ -103,5 +160,10 @@ test("proposal is concise and rejects control characters, multiline or empty fie
   assert.match(proposalText(proposal), /Proceed\?/);
   for (const bad of ["", "a\nb", "\u001b[31mhidden", "x".repeat(241)]) {
     assert.throws(() => proposalText({ ...proposal, next: bad }));
+  }
+  for (const key of Object.keys(proposal)) {
+    for (const question of ["Proceed?", "proceed ?"]) {
+      assert.throws(() => proposalText({ ...proposal, [key]: `${proposal[key]}. ${question}` }), /adapter.*Proceed/i);
+    }
   }
 });

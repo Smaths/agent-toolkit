@@ -89,12 +89,33 @@ export async function workspaceDiff(workspace, name, staged = false) {
   return { path: relative(workspace, path), staged, text: diff.slice(0, 16000), truncated: diff.length > 16000 };
 }
 
-export async function readScoped(scope, name, offset = 1, limit = 160) {
+async function localReadPath(workspace, name) {
+  if (typeof name !== "string" || !name.trim() || /[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/u.test(name)) {
+    throw new Error("Choose one readable local file or directory path.");
+  }
+  // Recognize native drive paths without treating URI schemes as repository paths.
+  if (/^[a-z][a-z\d+.-]*:/i.test(name) && !/^[a-z]:[\\/]/i.test(name)) {
+    throw new Error("URLs are not supported by the startup reader; supply local context or request a separately approved investigation.");
+  }
+  return realpath(resolve(workspace, name));
+}
+
+export async function resolveReadGrant(workspace, name) {
+  const path = await localReadPath(workspace, name);
+  const info = await lstat(path);
+  if (!info.isFile() && !info.isDirectory()) throw new Error("Read grants require a regular file or directory.");
+  return { path, kind: info.isDirectory() ? "directory" : "file" };
+}
+
+export async function readScoped(scope, name, offset = 1, limit = 160, grants = []) {
   if (!Number.isInteger(offset) || offset < 1 || !Number.isInteger(limit) || limit < 1 || limit > 200) {
     throw new Error("Read range must use a positive offset and 1–200 lines.");
   }
-  const path = await realpath(resolve(scope.workspace, name));
-  if (!inside(scope.workspace, path) && path !== scope.brief) throw new Error("Reference is outside startup read scope; ask the user.");
+  const path = await localReadPath(scope.workspace, name);
+  const granted = grants.some(grant => grant.kind === "directory" ? inside(grant.path, path) : grant.kind === "file" && path === grant.path);
+  if (!inside(scope.workspace, path) && path !== scope.brief && !granted) {
+    throw new Error("Reference is outside startup read scope. Ask the user to run /handoff-allow-read <path> and confirm its read scope; chat permission alone cannot grant access.");
+  }
   const bytes = await readRegular(path);
   if (bytes.includes(0)) throw new Error("Startup reader supports text files only.");
   const lines = bytes.toString("utf8").split("\n");
@@ -108,6 +129,7 @@ export function proposalText(proposal) {
     if (typeof value !== "string" || !value.trim() || value.length > 240 || /[\x00-\x1f\x7f-\x9f\u202a-\u202e\u2066-\u2069]/u.test(value)) {
       throw new Error("Proposal fields must be single readable lines of 1–240 characters.");
     }
+    if (/\bproceed\s*\?/i.test(value)) throw new Error("The adapter adds Proceed?; leave the approval question out of all proposal fields.");
   }
   return `Ready: ${proposal.outcome}\nChecked: ${proposal.checked}\nNext: ${proposal.next}\nVerify: ${proposal.verify}\nProceed?`;
 }
@@ -145,6 +167,20 @@ export async function verifyBrief(transfer) {
   if (hash(await readRegular(transfer.brief, 32 * 1024)) !== transfer.briefHash) {
     throw new Error("Saved brief changed; prepare a new handoff.");
   }
+}
+
+// Receiver observers merge metadata into their own existing launch record. They never
+// reconstruct it from approval state or overwrite another receiver's progress.
+export async function updateReceiverRecord(transfer, receiver, update) {
+  const record = JSON.parse((await readRegular(transfer.record)).toString("utf8"));
+  const identity = ["version", "id", "directory", "record", "brief", "briefHash", "workspace", "sourceSession"];
+  if (!record || identity.some(key => record[key] !== transfer[key]) || !receiver || record.receiver !== receiver || !["created", "delivered"].includes(record.status)) {
+    throw new Error("Launch record does not match this receiver; inspect it without redelivering.");
+  }
+  const patch = update(record);
+  if (!patch) return false;
+  await writeRecord(record, patch);
+  return true;
 }
 
 export async function writeRecord(transfer, update) {
