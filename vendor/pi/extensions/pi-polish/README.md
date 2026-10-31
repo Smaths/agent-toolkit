@@ -1,15 +1,13 @@
 # pi-polish
 
+**Retained for reference, not recommended for enablement.** See the [collection guide](../README.md#retained-source-not-recommended-for-enablement) for risks and alternatives. Nothing here is enabled by sync; the feature notes below describe the imported implementation, not a current compatibility guarantee.
+
 Makes [Pi](https://pi.dev)'s output look like Claude Code's: tool calls fold into short summary lines, and edits show as colored diffs.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-polish-dark.gif">
   <img src="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-polish-light.gif" alt="pi-polish demo">
 </picture>
-
-```bash
-pi install npm:pi-polish
-```
 
 ## Features
 
@@ -22,7 +20,7 @@ pi install npm:pi-polish
 
 ## Compatibility
 
-pi-polish only changes how Pi's built-in tools are drawn; the tools themselves run exactly as before. The chat styling (the markers and the status line) reaches into Pi's internal UI, so a new Pi release can break that part of the look until pi-polish is updated. Your sessions are never affected. Tested with Pi 1.3.
+pi-polish only changes how Pi's built-in tools are drawn; the tools themselves run exactly as before. The chat styling (the markers and the status line) reaches into Pi's internal UI, so a new Pi release can break that part of the look until pi-polish is updated. Upstream reported testing with Pi 1.3; this collection has not established live compatibility with Pi 1.4.0 or other loaded extensions.
 
 ## License
 

@@ -10,9 +10,9 @@ vendor/<vendor>/         Vendor-specific tools and integrations
 bin/                     Repository checks and optional setup
 ```
 
-Each skill has its own directory with a `SKILL.md`. Browse [portable skills](skills/) or tools for [Claude](vendor/claude/), [Orca](vendor/orca/), and [Pi](vendor/pi/).
+Each skill has its own directory with a `SKILL.md`. Browse [portable skills](skills/) or tools for [Claude](vendor/claude/) and [Pi](vendor/pi/).
 
-Examples include [swarm](skills/swarm/SKILL.md), the [Claude status-line](vendor/claude/status-line/README.md), and the [Pi status-line](vendor/pi/extensions/status-line/README.md). [SOURCES.md](SOURCES.md) credits imported work and records local changes.
+Examples include [swarm](skills/swarm/SKILL.md), [session handoff](skills/session-handoff/SKILL.md) with its [Pi adapter](vendor/pi/extensions/session-handoff/README.md), the [Claude status-line](vendor/claude/status-line/README.md), and the [Pi status-line](vendor/pi/extensions/status-line/README.md). [SOURCES.md](SOURCES.md) credits imported work and records local changes.
 
 Adding a tool to this repository does not enable it on your computer. See [AGENTS.md](AGENTS.md) for contribution instructions and [computer enablement](AGENTS.md#enable-on-this-computer).
 
@@ -29,4 +29,4 @@ bin/check
 
 CI also runs `bin/check`. It checks skill layout, links, attribution, and syntax, then runs offline tests. For static validation without running test suites, use `bin/check --static`.
 
-The suite includes offline Pi handoff tests using temporary repositories and a mocked runtime. The checks do not enable tools, launch agents, or evaluate model behavior. Component READMEs describe additional, opt-in checks.
+The suite includes Pi helper-package contracts, handoff tests using temporary repositories and a mocked runtime, and status-line layout, Git status, and cost/lifecycle regressions. The checks do not enable tools, launch agents, or evaluate model behavior. Component READMEs describe additional, opt-in checks.

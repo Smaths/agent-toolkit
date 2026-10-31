@@ -1,16 +1,15 @@
 # Pi packages
 
-The curated [status-line](status-line/README.md) and two on-demand prompt helpers live here alongside imported extensions retained for reference. Package paths are preserved from the original import, including the prompt-only packages under `extensions/`. Attribution and local changes are recorded in [SOURCES.md](../../../SOURCES.md); each imported package retains its license.
+The [session-handoff adapter](session-handoff/README.md), [status-line](status-line/README.md), and two on-demand prompt helpers live here alongside imported extensions retained for reference. Package paths are preserved from the original import, including the prompt-only packages under `extensions/`. Attribution and local changes are recorded in [SOURCES.md](../../../SOURCES.md); each imported package retains its license.
 
 ## Extensions
 
-The [session-handoff](session-handoff/README.md) adapter opens a fresh Pi conversation in the same terminal, loads a reference-first brief, and gates task tools behind state validation and a concise approval dialog. Its offline tests do not launch agents; it is not enabled automatically.
+| Package | Purpose | Details |
+| --- | --- | --- |
+| [session-handoff](session-handoff/README.md) | Fresh conversation in the same terminal, with reference-first inspection and explicit task approval. | [Requirements and trial](session-handoff/README.md#requirements-and-enablement), [gate limits](session-handoff/README.md#approval-boundary), [checks](session-handoff/README.md#verification). |
+| [status-line](status-line/README.md) | Footer with branch/file-change counts, model, context usage, and recorded session cost. | [Display and width fallbacks](status-line/README.md#what-it-shows), [local trial](status-line/README.md#local-trial), [checks](status-line/README.md#offline-checks). |
 
-The [status-line](status-line/README.md) package provides a custom footer. It is a local fork of Thomas van Dongen's [pi-extensions](https://github.com/Pringled/pi-extensions), pinned and attributed in [SOURCES.md](../../../SOURCES.md). Its MIT license and Pi package manifest are alongside the source.
-
-It offers a compact context gauge, model/branch with Git file-change counts, and session cost. The local fork handles unknown usage after compaction, totals all recorded session costs (including compaction and cache warming), and keeps extension status text. It replaces Pi's built-in footer, so the default cwd/session name, cache counters, auto-compaction indicator, and virtual-model route are not shown. It never shows `CTX:`. On narrow terminals it drops the visual gauge first, preserving numeric context and other text; see the [package README](status-line/README.md#what-it-shows) for the remaining width fallbacks.
-
-**Not enabled by this repository:** `bin/sync.sh` does not install Pi extensions, and importing source does not load it into Pi. An explicit, separate request is required to change Pi configuration. For a manual one-invocation trial, see [the package README](status-line/README.md#local-trial).
+**Not enabled by this repository:** `bin/sync.sh` does not install Pi packages, and importing source does not load it into Pi. An explicit, separate request is required to change Pi configuration. These local integrations target Pi **1.4.0**; retained source below has separate compatibility limits.
 
 ## On-demand helpers
 
@@ -50,4 +49,4 @@ Static prompt review covers short or resumed context, reported versus verified p
 - [pi-model-pick](pi-model-pick/README.md): overlaps `/model`.
 - [pi-polish](pi-polish/README.md): Pi internal UI patches and npm dependencies.
 
-Their manifests still expose executable code when explicitly selected. Their upstream READMEs may contain install commands; retaining source is not a recommendation to run them.
+Their manifests still expose executable code when explicitly selected. The package READMEs are reference notes, not enablement guidance; retaining source is not a recommendation to run it.

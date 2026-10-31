@@ -256,6 +256,9 @@ imports:
             "vendor/claude/status-line/tests/test_status_line.py",
             "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
             "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
+            "vendor/pi/extensions/status-line/tests/cost.test.mjs",
+            "vendor/pi/extensions/status-line/tests/git-status.test.mjs",
+            "vendor/pi/extensions/status-line/tests/layout.test.mjs",
         )
         for suite in suites:
             if suite.endswith(".mjs"):

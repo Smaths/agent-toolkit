@@ -1,6 +1,6 @@
 # Sources
 
-Imported tools are local forks. Keep upstream licenses alongside them and record substantive adaptations below. Upstream updates are optional.
+Imported tools are local forks. Keep upstream licenses alongside them and record substantive adaptations below. Upstream updates are optional. Retained Pi source READMEs flag reference-only status and omit upstream installation commands; implementation adaptations are recorded per package below.
 
 The YAML registry is checked by `bin/check`. Declare every skill as local or imported, and record imported tools. Import entries require an author, source URL, revision, license, and artifact paths (a list or a mapping with optional local-change notes). Record substantive adaptations. Each imported directory must retain its `LICENSE`.
 

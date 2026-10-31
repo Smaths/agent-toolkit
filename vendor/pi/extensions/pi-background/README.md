@@ -1,15 +1,13 @@
 # pi-background
 
+**Retained for reference, not recommended for enablement.** See the [collection guide](../README.md#retained-source-not-recommended-for-enablement) for risks and alternatives. Nothing here is enabled by sync; the feature notes below describe the imported implementation, not a current compatibility guarantee.
+
 Lets [Pi](https://pi.dev) run long commands in the background instead of waiting on them. Pi starts the job, carries on or hands back to you, and gets a message when the job finishes or prints something it's waiting for.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-background-dark.gif">
   <img src="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-background-light.gif" alt="pi-background demo">
 </picture>
-
-```bash
-pi install npm:pi-background
-```
 
 ## Features
 

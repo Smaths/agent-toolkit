@@ -14,11 +14,11 @@ The helper classifies supplied evidence. These tests cannot prove that the evide
 
 ## Receiver behavior
 
-Use [receiver-scenarios.md](receiver-scenarios.md) for reference-first capture, stale state, selective context retrieval, fresh approval, denial, and interruption scenarios. The [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md#verification) adds offline filesystem and mocked-runtime gate tests. These are separate from the Python receipt checks and from live model evaluation. The historical Orca results did not test the new proposal/approval flow. The [Pi 1.4.0 live smoke test](live-pi-2026-10-31.md) exercised fresh-session startup, settings preservation, denial, approval-time drift, approved execution, and interrupted-startup recovery; it also records three UX/bookkeeping findings and the limits of that evidence.
+Use [receiver-scenarios.md](receiver-scenarios.md) for reference-first capture, stale state, selective context retrieval, fresh approval, denial, and interruption scenarios. The [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md#verification) adds offline filesystem and mocked-runtime gate tests. These are separate from the Python receipt checks and from live model evaluation. The historical Orca results did not test the new proposal/approval flow. The [Pi 1.4.0 live smoke test](live-pi-2026-10-31.md) exercised fresh-session startup, settings preservation, denial, approval-time drift, approved execution, and interrupted-startup recovery; it also records three historical UX/bookkeeping findings, their later offline-tested fixes, and the limits of that evidence.
 
 ## Opt-in live smoke test
 
-Run only when the user explicitly requests live testing and selects a disposable Orca workspace. Do not test in a working task's checkout or change global settings.
+Run only when the user explicitly requests live testing and selects a disposable checkout. Use a disposable Orca workspace for the Orca launch path; the native Pi adapter instead runs in the same terminal as its source. Do not test in a working task's checkout or change global settings.
 
 For Pi, Claude, and Codex, test each chat/terminal mode the host actually supports. Do not change the user's Chat UI setting to force a mode without approval. Record the host and agent versions, requested settings, actual launch kind, prompt outcome, and independently observable settings. Mark unavailable modes as skipped and unobservable settings as unknown, not passed.
 

@@ -1,15 +1,13 @@
 # pi-checkpoints
 
+**Retained for reference, not recommended for enablement.** See the [collection guide](../README.md#retained-source-not-recommended-for-enablement) for risks and alternatives. Nothing here is enabled by sync; the feature notes below describe the imported implementation, not a current compatibility guarantee.
+
 Lets you rewind the files [Pi](https://pi.dev) edited along with the conversation. Pi's `/tree` and `/fork` already take you back to any earlier message, but your files stay as they are. With this installed, they offer to put the files back too.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-checkpoints-dark.gif">
   <img src="https://raw.githubusercontent.com/Pringled/pi-extensions/main/assets/images/pi-checkpoints-light.gif" alt="pi-checkpoints demo">
 </picture>
-
-```bash
-pi install npm:pi-checkpoints
-```
 
 ## Usage
 
