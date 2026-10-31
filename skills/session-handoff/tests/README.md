@@ -14,7 +14,7 @@ The helper classifies supplied evidence. These tests cannot prove that the evide
 
 ## Receiver behavior
 
-Use [receiver-scenarios.md](receiver-scenarios.md) for reference-first capture, stale state, selective context retrieval, fresh approval, denial, and interruption scenarios. The [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md#verification) adds offline filesystem and mocked-runtime gate tests. These are separate from the Python receipt checks and from live model evaluation. The historical Orca results did not test the new proposal/approval flow.
+Use [receiver-scenarios.md](receiver-scenarios.md) for reference-first capture, stale state, selective context retrieval, fresh approval, denial, and interruption scenarios. The [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md#verification) adds offline filesystem and mocked-runtime gate tests. These are separate from the Python receipt checks and from live model evaluation. The historical Orca results did not test the new proposal/approval flow. The [Pi 1.4.0 live smoke test](live-pi-2026-10-31.md) exercised fresh-session startup, settings preservation, denial, approval-time drift, approved execution, and interrupted-startup recovery; it also records three UX/bookkeeping findings and the limits of that evidence.
 
 ## Opt-in live smoke test
 
