@@ -249,6 +249,7 @@ imports:
         marker = self.root / "suites-ran.txt"
         suites = (
             "bin/test_check.py",
+            "bin/test_pi_helpers.py",
             "bin/test_sync.py",
             "skills/html-report/tests/test_embed_css.py",
             "skills/session-handoff/tests/test_check_handoff.py",
