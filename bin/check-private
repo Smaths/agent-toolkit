@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Shared, fail-closed Gitleaks and privacy-path gate for hooks and CI."""
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import subprocess
+import sys
+
+HERE = Path(__file__).resolve().parent
+BLOCKED_DIRS = {".local-artifacts", "transcripts", "screenshots", "live-sessions", "config-exports"}
+BLOCKED_SUFFIXES = {".har", ".key", ".p12", ".pfx"}
+
+
+class Blocked(Exception):
+    pass
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
+
+
+def oid(value):
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", value):
+        raise Blocked("Invalid object ID.")
+    return value
+
+
+def private_path(raw):
+    path = PurePosixPath(os.fsdecode(raw).lower())
+    return (bool(set(path.parts) & BLOCKED_DIRS)
+            or path.suffix in BLOCKED_SUFFIXES
+            or path.name == ".env" or path.name.startswith(".env.")
+            or path.name in {"id_rsa", "id_ed25519", "credentials", "credentials.json"})
+
+
+def push_ranges(lines):
+    for line in lines:
+        fields = line.split()
+        if len(fields) != 4:
+            raise Blocked("Invalid pre-push input.")
+        _, local, _, remote = fields
+        oid(local)
+        oid(remote)
+        if set(local) == {"0"}:
+            continue
+        tip = oid(git("rev-parse", "--verify", local + "^{commit}").strip().decode())
+        revisions = [tip]
+        if set(remote) != {"0"}:
+            try:
+                old = git("rev-parse", "--verify", remote + "^{commit}").strip().decode()
+                revisions.append("^" + oid(old))
+            except subprocess.CalledProcessError:
+                pass  # Unknown remote tip: scan all reachable history.
+        yield revisions
+
+
+def check_paths(tree):
+    for entry in git("ls-tree", "-rz", "--full-tree", tree).split(b"\0"):
+        if not entry:
+            continue
+        header, path = entry.split(b"\t", 1)
+        if private_path(path):
+            raise Blocked("Private artifact path blocked: " + ascii(os.fsdecode(path)))
+        if header.split()[1] != b"blob":
+            raise Blocked("Submodules are outside this check's coverage; refusing to proceed.")
+
+
+def scan(scanner, options):
+    result = subprocess.run(
+        [scanner, "git", ".", *options, "--config", str(HERE / "gitleaks.toml"),
+         "--gitleaks-ignore-path", os.devnull, "--ignore-gitleaks-allow",
+         "--redact=100", "--no-banner", "--no-color",
+         "--report-format", "json", "--report-path", "-"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+    if result.returncode == 0:
+        return
+    if result.returncode == 1:
+        findings = json.loads(result.stdout)
+        for finding in findings:
+            # Never echo match text, surrounding lines, messages, authors, or raw logs.
+            location = {key: finding.get(key) for key in ("File", "StartLine", "RuleID", "Commit")}
+            print(json.dumps(location, ensure_ascii=True), file=sys.stderr)
+        raise Blocked("Secret scan blocked. Review the locations above; no secret values are printed.")
+    raise Blocked(f"Gitleaks failed (exit {result.returncode}); refusing to proceed.")
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in {"staged", "pre-push", "history"}:
+        raise Blocked("Usage: bin/check-private staged|pre-push|history")
+    # Apply to our Git commands AND Git subprocesses started by Gitleaks.
+    os.environ["GIT_NO_REPLACE_OBJECTS"] = "1"
+    git_version = re.match(rb"git version (\d+)\.(\d+)", git("--version"))
+    if not git_version or tuple(map(int, git_version.groups())) < (2, 41):
+        raise Blocked("Git 2.41+ required to ignore committed diff-suppressing attributes.")
+    # Empty-tree attributes, in this repository's object format (SHA-1 or SHA-256).
+    os.environ["GIT_ATTR_SOURCE"] = git("hash-object", "-t", "tree", os.devnull).strip().decode()
+    count = int(os.environ.get("GIT_CONFIG_COUNT", "0"))
+    for index, key in enumerate(("color.ui", "color.diff"), start=count):
+        os.environ[f"GIT_CONFIG_KEY_{index}"] = key
+        os.environ[f"GIT_CONFIG_VALUE_{index}"] = "never"
+    os.environ["GIT_CONFIG_COUNT"] = str(count + 2)
+    for key in list(os.environ):
+        if key.startswith("GITLEAKS_"):
+            del os.environ[key]
+    version = json.loads((HERE / "gitleaks-pin.json").read_text())["version"]
+    scanner = shutil.which("gitleaks")
+    if not scanner:
+        raise Blocked(f"Gitleaks missing; install {version}. See README.md#enable-locally-explicit-opt-in.")
+    installed = subprocess.check_output([scanner, "version"], stderr=subprocess.DEVNULL).decode().strip()
+    if installed.lstrip("v") != version:
+        raise Blocked(f"Gitleaks {version} required; installed version differs. See bin/gitleaks-pin.json.")
+    os.chdir(os.fsdecode(git("rev-parse", "--show-toplevel").rstrip(b"\n")))
+    mode = sys.argv[1]
+    if mode == "staged":
+        check_paths(git("write-tree").strip().decode())
+        scan(scanner, ["--staged"])
+    else:
+        if git("rev-parse", "--is-shallow-repository").strip() != b"false":
+            raise Blocked("Full Git history required; shallow repositories are blocked.")
+        ranges = push_ranges(sys.stdin) if mode == "pre-push" else [["HEAD"]]
+        for revisions in ranges:
+            for commit in git("rev-list", *revisions).decode().split():
+                check_paths(commit)
+            # -m includes merge-only changes; root commits and renames must not disappear.
+            options = "--full-history --root -m --no-renames --no-ext-diff --no-textconv "
+            scan(scanner, ["--log-opts=" + options + " ".join(revisions)])
+    print("Secret/privacy check passed.")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (Blocked, OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError):
+        error = sys.exc_info()[1]
+        print(str(error) if isinstance(error, Blocked) else "Secret/privacy check failed; refusing to proceed.", file=sys.stderr)
+        sys.exit(1)

@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 *.py[cod]
+
+# Accident guard only: keep private evidence outside this checkout.
+.local-artifacts/
