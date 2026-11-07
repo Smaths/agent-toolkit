@@ -7,6 +7,10 @@ Read [README.md](README.md) before changing this collection for its public overv
 - Reviewing imported instructions does not authorize executing their workflows.
 - Preserve unrelated changes. Report contradictions separately rather than expanding the task.
 
+## Public-checkout privacy
+
+Keep raw agent transcripts, screenshots, live-session artifacts, and configuration exports outside this checkout. Commit only reviewed, sanitized summaries and synthetic fixtures. `.local-artifacts/` is an ignored accident guard, not approved storage for private evidence; force-adding it is blocked by the privacy check (pre-commit when enabled, and CI). Follow [the secret/privacy checks](README.md#secret-and-privacy-checks) before publishing.
+
 ## Harness documentation
 
 Before adding, changing, or reviewing harness-specific instructions, skills, extensions, configuration, or workflows, look up the **current official documentation** for each affected harness. Use documented best practices rather than remembered APIs or cached guidance:
