@@ -20,7 +20,9 @@ FIXTURES = json.loads((ROOT / "tests/fixtures/scenarios.json").read_text())
 def record(agent):
     return {
         **deepcopy(agent),
+        "source": {"host": "fixture-host", "workspace": "/fixture/workspace"},
         "target": {"host": "fixture-host", "workspace": "/fixture/workspace"},
+        "handoff_destination": "/fixture/workspace",
         "checks": deepcopy(FIXTURES["checks"]),
         "capabilities": [],
     }
@@ -79,6 +81,38 @@ class PreflightTests(unittest.TestCase):
                     self.assertEqual(result["status"], status)
                     self.assertEqual(result["automatic_launch_allowed"], status == "supported")
 
+    def test_receiver_checked_dependency_does_not_mask_startup_blockers(self):
+        value = record(FIXTURES["agents"][0])
+        value["deferred_capabilities"] = [{
+            "name": "public docs lookup", "status": "unknown",
+            "evidence": "Only visible inside the receiver",
+            "startup_check": "Check availability before research",
+            "on_failure": "stop-and-ask",
+        }]
+        self.assertTrue(checker.preflight(value)["automatic_launch_allowed"])
+        value["checks"]["launch"]["status"] = "unknown"
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        value["checks"]["launch"]["status"] = "supported"
+        value["capabilities"] = [{"name": "startup tool", "status": "unknown", "evidence": "Missing"}]
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+
+    def test_deferred_dependency_requires_explicit_receiver_gate(self):
+        base = record(FIXTURES["agents"][0])
+        base["deferred_capabilities"] = [{
+            "name": "public docs lookup", "status": "unknown", "evidence": "Receiver-only",
+            "startup_check": "Check first", "on_failure": "stop-and-ask",
+        }]
+        for field, invalid in (("name", ""), ("status", "supported"), ("evidence", None),
+                               ("startup_check", " "), ("on_failure", "continue")):
+            with self.subTest(field=field):
+                value = deepcopy(base)
+                value["deferred_capabilities"][0][field] = invalid
+                self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        for invalid in (None, {}, [None]):
+            value = deepcopy(base)
+            value["deferred_capabilities"] = invalid
+            self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+
     def test_inventory_must_be_explicit(self):
         for inventory in (None, {}, "", [None], [{"status": "supported", "evidence": "fixture"}]):
             value = record(FIXTURES["agents"][0])
@@ -96,8 +130,75 @@ class PreflightTests(unittest.TestCase):
     def test_workspace_must_be_absolute_on_the_target_platform(self):
         for workspace, allowed in (("relative/project", False), ("~/project", False), ("/srv/project", True), ("C:\\work\\project", True)):
             value = record(FIXTURES["agents"][0])
+            value["source"]["workspace"] = workspace
             value["target"]["workspace"] = workspace
+            value["handoff_destination"] = workspace
             self.assertEqual(checker.preflight(value)["automatic_launch_allowed"], allowed)
+
+    def test_same_worktree_uses_one_root_even_when_task_is_in_subdirectory(self):
+        value = record(FIXTURES["agents"][0])
+        value["checks"]["workspace"] = {
+            "status": "supported", "evidence": "Source cwd /fixture/workspace/subdir; Orca root /fixture/workspace; one status snapshot"
+        }
+        self.assertTrue(checker.preflight(value)["automatic_launch_allowed"])
+        value["target"]["workspace"] = value["handoff_destination"] = "/fixture/workspace/subdir"
+        result = checker.preflight(value)
+        self.assertFalse(result["automatic_launch_allowed"])
+        self.assertIn("checkout_change_approval", [item["check"] for item in result["blockers"]])
+
+    def test_launch_target_must_match_saved_handoff_destination(self):
+        value = record(FIXTURES["agents"][0])
+        for destination in (None, "/fixture/other-worktree"):
+            with self.subTest(destination=destination):
+                value["handoff_destination"] = destination
+                result = checker.preflight(value)
+                self.assertFalse(result["automatic_launch_allowed"])
+                self.assertIn("handoff_destination", [item["check"] for item in result["blockers"]])
+
+    def test_checkout_change_requires_explicit_approval_and_workspace_evidence(self):
+        value = record(FIXTURES["agents"][0])
+        value["source"]["branch"] = value["target"]["branch"] = "same-branch"
+        value["target"]["workspace"] = value["handoff_destination"] = "/fixture/other-checkout"
+        result = checker.preflight(value)
+        self.assertFalse(result["automatic_launch_allowed"])
+        self.assertIn("checkout_change_approval", [item["check"] for item in result["blockers"]])
+        value["checks"]["checkout_change_approval"] = {
+            "status": "supported", "evidence": "User explicitly selected existing /fixture/other-checkout"
+        }
+        value["checks"]["workspace"] = {"status": "unknown", "evidence": "Required files not checked yet"}
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        value["checks"]["workspace"] = {
+            "status": "supported", "evidence": "Fixture: required changes verified in /fixture/other-checkout"
+        }
+        self.assertTrue(checker.preflight(value)["automatic_launch_allowed"])
+        value["target"]["workspace"] = value["handoff_destination"] = value["source"]["workspace"]
+        value["target"]["host"] = "other-host"
+        del value["checks"]["checkout_change_approval"]
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+
+    def test_missing_source_checkout_cannot_establish_default(self):
+        value = record(FIXTURES["agents"][0])
+        for source in ({}, {"workspace": "/fixture/workspace"}, {"host": "fixture-host"}):
+            with self.subTest(source=source):
+                value["source"] = source
+                self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+
+    def test_pi_configured_default_requires_explicit_approval(self):
+        value = record(FIXTURES["agents"][0])
+        value["settings_selection"] = "agent-default"
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        value["checks"]["default_settings_approval"] = {
+            "status": "supported", "evidence": "User approved receiver Pi defaults for this handoff"
+        }
+        self.assertTrue(checker.preflight(value)["automatic_launch_allowed"])
+        value["agent"] = "codex"
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        value["agent"] = "pi"
+        value["checks"]["launch"]["status"] = "unsupported"
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+        value["checks"]["launch"]["status"] = "supported"
+        value["settings"]["model"] = None
+        self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
 
     def test_unknown_profiles_and_target(self):
         for agent in ("other", None, []):

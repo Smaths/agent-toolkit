@@ -45,11 +45,34 @@ def preflight(record):
     agent = record.get("agent")
     profile = PROFILES.get(agent) if isinstance(agent, str) else None
     require("agent_profile", "supported" if profile else "unknown")
+    source = obj(record.get("source"))
+    require("source.host", "supported" if text(source.get("host")) else "unknown")
+    source_workspace = source.get("workspace")
+    source_absolute = text(source_workspace) and (
+        PurePosixPath(source_workspace).is_absolute() or PureWindowsPath(source_workspace).is_absolute()
+    )
+    require("source.workspace", "supported" if source_absolute else "unknown")
+
     target = obj(record.get("target"))
     require("target.host", "supported" if text(target.get("host")) else "unknown")
     workspace = target.get("workspace")
     absolute = text(workspace) and (PurePosixPath(workspace).is_absolute() or PureWindowsPath(workspace).is_absolute())
     require("target.workspace", "supported" if absolute else "unknown")
+    destination = record.get("handoff_destination")
+    destination_status = "unknown" if not text(destination) else "supported" if destination == workspace else "unsupported"
+    require("handoff_destination", destination_status)
+
+    checks = obj(record.get("checks"))
+    if source_absolute and text(source.get("host")) and text(target.get("host")) and absolute:
+        if (source["host"], source_workspace) != (target["host"], workspace):
+            require("checkout_change_approval", evidence_status(checks.get("checkout_change_approval")))
+
+    selection = record.get("settings_selection", "exact")
+    if selection == "agent-default":
+        require("settings_selection", "supported" if agent == "pi" else "unsupported")
+        require("default_settings_approval", evidence_status(checks.get("default_settings_approval")))
+    elif selection != "exact":
+        require("settings_selection", "unknown")
 
     settings = obj(record.get("settings"))
     settings_known = profile is not None
@@ -58,7 +81,6 @@ def preflight(record):
         require("settings." + field, "supported" if known else "unknown")
         settings_known = settings_known and known
 
-    checks = obj(record.get("checks"))
     for name in dict.fromkeys((*REQUIRED_CHECKS, *checks)):
         require(name, evidence_status(checks.get(name)))
     settings_known = settings_known and evidence_status(checks.get("settings")) == "supported"
@@ -73,6 +95,16 @@ def preflight(record):
             if not text(name):
                 require(f"capability[{index}].name", "unknown")
             require(f"capability[{index}]", evidence_status(capability))
+
+    deferred = record.get("deferred_capabilities", [])
+    if not isinstance(deferred, list):
+        require("deferred_capabilities_inventory", "unknown")
+    else:
+        for index, item in enumerate(deferred):
+            item = obj(item)
+            valid = all(text(item.get(field)) for field in ("name", "evidence", "startup_check"))
+            valid = valid and item.get("status") == "unknown" and item.get("on_failure") == "stop-and-ask"
+            require(f"deferred_capability[{index}]", "supported" if valid else "unknown")
 
     states = {problem["status"] for problem in problems}
     status = "unsupported" if "unsupported" in states else "unknown" if states else "supported"
