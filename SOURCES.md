@@ -7,6 +7,7 @@ The YAML registry is checked by `bin/check`. Declare every skill as local or imp
 ```yaml
 local:
   - skills/commit
+  - skills/recap
   - skills/session-handoff
   - skills/sync-docs
   - skills/unslop-for-agents
@@ -53,5 +54,7 @@ imports:
 ```
 
 The `html-report` inspiration at Matt Pocock revision `5beb35b040e3de97e54fa9e386d7e42d15c295c2`: [architecture skill](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/SKILL.md), [HTML report guidance](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/improve-codebase-architecture/HTML-REPORT.md), and [design it twice](https://github.com/mattpocock/skills/blob/5beb35b040e3de97e54fa9e386d7e42d15c295c2/skills/engineering/codebase-design/DESIGN-IT-TWICE.md). The local skill generalizes their content principles; the original MIT license is retained.
+
+The local `recap` skill is original wording informed by [Claude Code's session recap](https://code.claude.com/docs/en/interactive-mode#session-recap) (bounded output), [Daniel Miessler's Fabric summarization pattern](https://github.com/danielmiessler/Fabric/blob/main/data/patterns/summarize/system.md) (scannable structure without repetition), [Annika Lewis's claude-recap](https://github.com/annikalewis/claude-recap) (thematic grouping and honest light-session reporting), and [ProstDev's recap article](https://prostdev.com/post/recap-skills-catch-up-on-any-claude-session/) (separating reporting from execution). No upstream prose or code was copied. It uses only the current conversation, optional sections, a 200-word ceiling, and evidence-gated next steps rather than history scanning, fixed item quotas, or live-state refreshes.
 
 The pstack imports other than `unslop` came through the [standalone mirror](https://github.com/backnotprop/pstack). Registry checks establish completeness, not license compliance or agreement with upstream contents.
