@@ -4,8 +4,10 @@ from copy import deepcopy
 import importlib.util
 import json
 from pathlib import Path
+import shlex
 import subprocess
 import sys
+import tempfile
 import unittest
 
 sys.dont_write_bytecode = True
@@ -183,6 +185,22 @@ class PreflightTests(unittest.TestCase):
                 value["source"] = source
                 self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
 
+    def test_native_cli_input_support_does_not_require_startup_observation(self):
+        for agent in FIXTURES["agents"]:
+            with self.subTest(agent=agent["agent"]):
+                value = record(agent)
+                value["launch"] = {"method": "native-cli"}
+                value["checks"]["prompt"] = {
+                    "status": "supported",
+                    "evidence": "Fixture installed help accepts a positional prompt; Orca observer unsupported",
+                }
+                value["result"] = {"startup": "unconfirmed", "handle": None}
+                result = checker.preflight(value)
+                self.assertTrue(result["automatic_launch_allowed"])
+                self.assertNotIn("receiver_verified", result)
+                value["checks"]["prompt"]["status"] = "unknown"
+                self.assertFalse(checker.preflight(value)["automatic_launch_allowed"])
+
     def test_pi_configured_default_requires_explicit_approval(self):
         value = record(FIXTURES["agents"][0])
         value["settings_selection"] = "agent-default"
@@ -285,6 +303,21 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual(result["status"], "unconfirmed")
         self.assertIsNone(result["kind"])
 
+    def test_native_cli_observations_are_not_managed_delivery_receipts(self):
+        for startup in ("unconfirmed", "blocked", "observed"):
+            with self.subTest(startup=startup):
+                response = {"result": {
+                    "outcome": {"kind": "terminal", "handle": "terminal:fixture-cli"},
+                    "prompt_supplied": True,
+                    "startup": startup,
+                }}
+                result = checker.receipt(response)
+                self.assertEqual(result["status"], "unconfirmed")
+                self.assertEqual(result["handle"], "terminal:fixture-cli")
+                self.assertEqual(result["recovery"], "inspect-without-input")
+                self.assertFalse(result["receiver_verified"])
+                self.assertIsNone(result["prompt_outcome"])
+
     def test_unknown_prompt_outcome_is_not_delivery(self):
         for outcome in ("queued", "accepted", "future-status", "failed"):
             response = deepcopy(FIXTURES["receipts"][0]["input"])
@@ -311,6 +344,42 @@ class ReceiptTests(unittest.TestCase):
         result = checker.receipt(response)
         self.assertNotIn("fixture-secret-do-not-echo", json.dumps(result))
         self.assertNotIn("requested-only", json.dumps(result))
+
+
+class PosixCommandTests(unittest.TestCase):
+    def test_documented_quoting_preserves_prompt_through_both_shells(self):
+        # Exercise cli.md's shlex.join recipe, not a real harness or Orca launch.
+        with tempfile.TemporaryDirectory(prefix="handoff-quote-") as temporary:
+            workspace = Path(temporary).resolve() / "checkout with 'quotes'"
+            workspace.mkdir()
+            capture = workspace / "fake cli 'receiver'.py"
+            capture.write_text(
+                "import json, os, sys\n"
+                "print(json.dumps({'cwd': os.getcwd(), 'args': sys.argv[1:]}))\n"
+            )
+            prompt = (
+                f"Read {workspace}/private handoff.md and follow Receiver startup. "
+                "Literal 'apostrophe', \"quotes\", $HOME, $(touch injected), `touch injected`, ; & \\ \n"
+                "Ask for fresh approval and stop before tests or edits."
+            )
+            expected = ["--model", "fixture-model", "--thinking", "high", prompt]
+            command = "exec " + shlex.join([sys.executable, str(capture), *expected])
+            # The outer shell passes one --command-like argument to the launcher;
+            # the destination shell then parses that command in the selected cwd.
+            launcher = (
+                "import subprocess, sys; "
+                "sys.exit(subprocess.call(['sh', '-c', sys.argv[1]]))"
+            )
+            outer = shlex.join([sys.executable, "-c", launcher, command])
+            result = subprocess.run(
+                ["sh", "-c", outer], cwd=workspace,
+                capture_output=True, text=True, timeout=5,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout), {
+                "cwd": str(workspace), "args": expected,
+            })
+            self.assertFalse((workspace / "injected").exists())
 
 
 class CliTests(unittest.TestCase):

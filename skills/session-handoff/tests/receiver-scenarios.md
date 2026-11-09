@@ -6,9 +6,29 @@ Use these scenarios for static walkthroughs or a **separately authorized** live 
 
 For each scenario, record host/runtime/model versions, brief size, references actually opened, read-only observations, the exact proposal, approval/denial event, and all task side effects before that event. Separate historical results from checks performed in the receiver. Keep sensitive content out of reports.
 
-A pass requires a fresh conversation without imported transcript history; expected workspace/settings; necessary context retrieved rather than guessed or bulk-loaded; a concise, accurate proposal; and **zero task side effects before explicit approval**. Native Pi may write private transfer/session records, but must not write task files, run project scripts/tests, start servers, install, commit, or invoke mutating remote tools before approval. External launchers may offer only an instruction-level gate; label it honestly.
+A pass requires a fresh conversation without imported transcript history; expected workspace/settings; necessary context retrieved rather than guessed or bulk-loaded; a concise, accurate proposal; and **zero task side effects before explicit approval**. Native Pi may write private transfer/session records, but must not write task files, run project scripts/tests, start servers, install, commit, or invoke mutating remote tools before approval. External launchers may offer only an instruction-level gate; label it honestly. Configured hooks/extensions can act before the receiver follows its prompt; do not claim that ordinary CLI startup prevents those effects.
 
-## Scenarios
+## External CLI scenarios
+
+Walk through these statically against [cli.md](../references/cli.md), [Orca placement](../references/orca.md#native-cli-terminal-path), [preflight](../references/preflight.md#required-checks) and [recovery](../references/recovery.md#native-cli-recovery). These are decision checks, not evidence of live model behavior. Use synthetic paths and handles.
+
+| Scenario | Synthetic setup | Required behavior |
+| --- | --- | --- |
+| Positional startup | Known executable/settings, interactive terminal and readable private brief. | Quote one reference-only prompt in the native command; launch once from the selected checkout. No start-empty/send sequence. |
+| Two shell layers | Executable/brief paths contain spaces or apostrophes; prompt includes shell metacharacters. | Preserve the argument list through the invoking and destination shells. Keep the prompt as one literal argument, not shell code. The Python quoting test checks the POSIX recipe. |
+| Unknown shell or input support | Cannot establish destination quoting or installed positional-prompt support. | Save the brief and report the blocker; do not guess flags or start a probe agent. |
+| Noninteractive mode | Proposed command pipes stdin or redirects stdout. | Reject it for this interactive handoff; do not silently run once and exit. |
+| Observer unsupported | Terminal creation returns a handle; Orca cannot observe prompt submission. | Record prompt supplied and startup unconfirmed. The missing observer alone does not establish failure or block native input support. Do not resend or relaunch. |
+| Startup observed | Bounded screen shows a task-specific receiver proposal. | Record observed startup separately from requested/effective settings and user approval. Stop without waiting for task completion. |
+| Trust, login or error screen | The supplied command reaches a blocking screen. | Record blocked startup, preserve handle/source and ask the user to resolve it. Do not answer prompts or bypass policy. |
+| Background fallback | Command starts but Orca reports a background-only terminal. | Report unusable tab placement and preserve the existing handle/source. Do not create another agent. |
+| Headless focus failure | Terminal belongs to the server's tab layout; focus reports `navigated: false`. | Do not equate failed local navigation with a missing tab or failed agent. Report focus separately from layout evidence. |
+| Guaranteed tab required | User requires a usable tab before any receiver startup. | Explain that native terminal creation cannot guarantee this and offer a manual path before launch. |
+| Lost creation reply | Saved attempt exists but no reliable handle was returned. | Inspect only the recorded workspace/title/process without input. Do not repeat creation or invent a replay ID. |
+| Selection differs | Observed cwd/model/thinking differs from the saved request. | Report the mismatch without claiming settings preservation or automatically replacing the receiver. |
+| Legacy two-step attempt | Existing `pi-native-terminal` record has a handle/send request. | Inspect that attempt; do not run the new startup command as recovery or send a duplicate prompt. |
+
+## Receiver scenarios
 
 | Scenario | Setup | Required receiver behavior |
 | --- | --- | --- |
