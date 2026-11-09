@@ -50,7 +50,7 @@ Update the version and Linux x64 archive SHA-256 together in `bin/gitleaks-pin.j
 
 ### GitHub enforcement
 
-After the workflow has run, a repository administrator must require **Secret and privacy** in the protected-branch ruleset for `main` (including the intended administrator/bypass policy). Workflow files alone cannot require checks. Keep GitHub push protection enabled as an independent server-side layer; verify that setting in repository security settings.
+This personal repository allows direct pushes and merge commits to `main`; pull requests and CI checks, including **Secret and privacy**, are advisory rather than required. Keep signed commits, force-push protection, and branch-deletion protection enabled in the default-branch ruleset. Keep GitHub secret scanning and push protection enabled as independent server-side safeguards. Workflow files alone do not enforce branch rules; verify those settings on GitHub.
 
 CI catches skipped/uninstalled hooks **after upload**, not before public exposure. Hooks are bypassable and no scanner guarantees that all private information is caught. If a real credential is published, revoke/rotate it first; deleting it in a later commit is insufficient.
 
