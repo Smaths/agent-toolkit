@@ -2,7 +2,7 @@
 name: session-handoff
 description: Prepare a reference-first restart brief and open a fresh session that validates state, proposes the next step, and waits for approval.
 disable-model-invocation: true
-compatibility: Requires filesystem access. Automatic transfer requires a supported fresh-session launcher or verified Pi terminal path; approval-gate enforcement is runtime-specific.
+compatibility: Requires filesystem access. External transfer requires a supported interactive CLI and terminal launcher, or a managed fresh-session launcher. Approval-gate enforcement is runtime-specific.
 ---
 
 # Session handoff
@@ -20,8 +20,8 @@ Resolve the enclosing checkout root once from the source session's workspace (Or
 Choose one launch path:
 
 - **Pi native:** when the [Pi adapter](../../vendor/pi/extensions/session-handoff/README.md) is loaded, the session cwd is the checkout root, and the user wants a fresh conversation in the same terminal, use `/handoff`. Follow its prepare-and-deliver instructions; do not also launch through Orca. If the adapter's root requirement cannot be met without changing the session, report the blocker. A different host, checkout, agent, or tab requires another path.
-- **Orca:** for a new tab or another agent, read [references/orca.md](references/orca.md) and apply the bounded [preflight](references/preflight.md). If exact Pi settings cannot be forwarded, consider the verified native Pi terminal path there before approved configured defaults or a manual command.
-- **Other/manual:** use the runtime's documented fresh-session launcher and the same preflight. If launch support is unknown, save the brief and report the blocker. Give a quoted manual command only when its settings are known.
+- **External CLI:** for a fresh session in a new terminal, use [references/cli.md](references/cli.md) and the bounded [preflight](references/preflight.md). Supply the short startup prompt as one positional argument to the installed harness. Orca is optional terminal placement; read [references/orca.md](references/orca.md) when using it. This path does not provide an Orca agent-launch receipt or runtime approval gate.
+- **Managed/other:** retain the runtime's documented fresh-session launcher for a requested chat or other supported placement. For Orca-managed launches, follow [references/orca.md](references/orca.md#managed-agent-launch). Use the same preflight. If automatic launch is unavailable, provide a quoted manual CLI command only when its settings and shell are known.
 
 A request to review this skill or plan a handoff does not authorize a transfer. Never start probe agents, change global defaults, or silently substitute settings or placement. A branch name does not transfer dirty files; obtain approval before copying, committing, or discarding work for a different destination.
 
@@ -91,8 +91,8 @@ Launch with a short prompt:
 Read <absolute-handoff-path> and follow its Receiver startup. Validate state and any explicitly deferred capability using available read-only startup tools; ask if that check cannot run. Retrieve only context needed for a bounded proposal. Ask for fresh approval and stop before any task side effects, even if earlier work was approved.
 ```
 
-For external launches, confirm both the receiving handle and prompt delivery: an agent-launch receipt or, for a verified native Pi terminal, a terminal-send receipt reaching `turn_started`. Store evidence in the launch record. A native Pi adapter uses its own record. None of these receipts proves successful validation, effective settings, user approval, or task completion. For ambiguous results, follow the relevant recovery guide; never resend on silence.
+For external CLI launches, follow [references/cli.md](references/cli.md#launch-once): record creation, the prompt supplied in the command, observed receiver startup and actual placement separately. Use bounded startup output when available; an unavailable observer leaves startup unconfirmed, not failed. Do not add a separate terminal-send step or require `turn_started`. Managed launchers keep their documented receipts; the Pi adapter uses its own record. None of these establishes effective settings, successful validation, user approval or task completion. Follow [recovery.md](references/recovery.md) for ambiguous results; never resend on silence.
 
 If transfer is unavailable, report the saved brief and blocker. Provide a quoted manual command only when its settings are known, with destination host and working directory.
 
-Report the brief and record paths, receiving session/handle if any, requested versus confirmed settings, delivery status, placement, approval-gate enforcement, and source cleanup status. Stop substantive work in the source after confirmed delivery. Leave it available unless explicitly authorized cleanup is supported; do not close the receiver or shared panes.
+Report the brief and record paths, receiving session/handle if any, requested versus confirmed settings, launch/startup or managed-delivery status, placement, approval-gate enforcement, and source cleanup status. Stop after the launch report even when startup is unconfirmed; do not resume substantive work or retry on silence. Leave the source available unless explicitly authorized cleanup is supported; do not close the receiver or shared panes.

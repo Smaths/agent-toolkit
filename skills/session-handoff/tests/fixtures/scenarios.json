@@ -8,7 +8,7 @@
   "checks": {
     "settings": {"status": "supported", "evidence": "Fixture: current session values and compatibility confirmed"},
     "launch": {"status": "supported", "evidence": "Fixture: destination documents this agent's exact-settings launch"},
-    "prompt": {"status": "supported", "evidence": "Fixture: launcher accepts an initial prompt with a receipt"},
+    "prompt": {"status": "supported", "evidence": "Fixture: installed harness accepts a positional initial prompt, or managed launcher supports its prompt API"},
     "placement": {"status": "supported", "evidence": "Fixture: requested tab is supported"},
     "handoff_access": {"status": "supported", "evidence": "Fixture: destination can read the saved handoff"},
     "workspace": {"status": "supported", "evidence": "Fixture: same checkout and changes are present"}
@@ -18,7 +18,7 @@
     {"name": "incompatible-settings", "check": "settings", "status": "unsupported", "expected": "unsupported", "manual_settings_known": false},
     {"name": "generic-flags-only", "check": "launch", "status": "unknown", "expected": "unknown", "manual_settings_known": true},
     {"name": "unsupported-launch-flags", "check": "launch", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
-    {"name": "unproven-prompt-delivery", "check": "prompt", "status": "unknown", "expected": "unknown", "manual_settings_known": true},
+    {"name": "unknown-initial-prompt-support", "check": "prompt", "status": "unknown", "expected": "unknown", "manual_settings_known": true},
     {"name": "unsupported-split", "check": "placement", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
     {"name": "remote-file-unavailable", "check": "handoff_access", "status": "unsupported", "expected": "unsupported", "manual_settings_known": true},
     {"name": "dirty-work-not-transferred", "check": "workspace", "status": "unknown", "expected": "unknown", "manual_settings_known": true}
