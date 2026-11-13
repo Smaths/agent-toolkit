@@ -335,6 +335,7 @@ def main():
         result = subprocess.run([sys.executable, "-B", str(ROOT / suite)], cwd=ROOT)
         failed |= result.returncode != 0
     node_suites = [
+        "vendor/orca/decision-card/decision-card.test.mjs",
         "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
         "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
         "vendor/pi/extensions/status-line/tests/cost.test.mjs",
@@ -347,7 +348,7 @@ def main():
             result = subprocess.run(["node", "--test", str(ROOT / suite)], cwd=ROOT)
             failed |= result.returncode != 0
         except FileNotFoundError:
-            print("Node.js 22.19+ is required for Pi extension checks; see README.md#checks.", file=sys.stderr)
+            print("Node.js 22.19+ is required for JavaScript checks; see README.md#checks.", file=sys.stderr)
             failed = True
             break
     return int(failed)

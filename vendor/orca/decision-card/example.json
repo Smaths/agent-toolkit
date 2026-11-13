@@ -1,0 +1,59 @@
+{
+  "schemaVersion": "1.0",
+  "id": "example-documentation-search",
+  "question": "How should we add search to a small documentation site?",
+  "context": "Synthetic experiment: a team has a static documentation site with about 200 public pages. The priority is useful search without taking on a new service.",
+  "criteria": [
+    "Low ongoing maintenance",
+    "Works without a backend",
+    "Enough room to improve ranking"
+  ],
+  "options": [
+    {
+      "id": "static-index",
+      "title": "Build a static search index",
+      "summary": "Generate a compact index alongside the site and search it in the browser.",
+      "benefits": [
+        "No search service to operate",
+        "Fits the existing static-site deployment"
+      ],
+      "tradeoffs": [
+        "Index size grows with the documentation",
+        "Ranking improvements need frontend work"
+      ],
+      "effort": "low"
+    },
+    {
+      "id": "hosted-search",
+      "title": "Use a hosted search service",
+      "summary": "Send the public documentation to a managed search provider.",
+      "benefits": [
+        "More capable ranking and search tooling",
+        "Less search-engine implementation work"
+      ],
+      "tradeoffs": [
+        "Adds an external dependency and possible recurring cost",
+        "Requires reviewing provider privacy and indexing rules"
+      ],
+      "effort": "medium"
+    },
+    {
+      "id": "self-hosted-search",
+      "title": "Run our own search service",
+      "summary": "Deploy a search backend with full control over indexing and querying.",
+      "benefits": [
+        "Control over ranking, operations, and data",
+        "Can support future private content"
+      ],
+      "tradeoffs": [
+        "Adds backups, monitoring, and upgrades",
+        "More operational work than this site currently needs"
+      ],
+      "effort": "high"
+    }
+  ],
+  "recommendation": {
+    "optionId": "static-index",
+    "reason": "For 200 public pages, a static index is the smallest operational commitment. Revisit hosted search if measured relevance or index size becomes a problem."
+  }
+}

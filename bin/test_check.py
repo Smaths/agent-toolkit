@@ -255,6 +255,7 @@ imports:
             "skills/html-report/tests/test_embed_css.py",
             "skills/session-handoff/tests/test_check_handoff.py",
             "vendor/claude/status-line/tests/test_status_line.py",
+            "vendor/orca/decision-card/decision-card.test.mjs",
             "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
             "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
             "vendor/pi/extensions/status-line/tests/cost.test.mjs",
