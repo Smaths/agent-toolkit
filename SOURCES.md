@@ -12,7 +12,9 @@ local:
   - skills/sync-docs
   - skills/unslop-for-agents
   - skills/verification-readiness
+  - skills/wrap-up
   - vendor/orca/decision-card
+  - vendor/orca/wrap-up
 imports:
   - author: Mario Zechner
     source: https://github.com/earendil-works/pi
@@ -59,5 +61,7 @@ The `html-report` inspiration at Matt Pocock revision `5beb35b040e3de97e54fa9e38
 The local `recap` skill is original wording informed by [Claude Code's session recap](https://code.claude.com/docs/en/interactive-mode#session-recap) (bounded output), [Daniel Miessler's Fabric summarization pattern](https://github.com/danielmiessler/Fabric/blob/main/data/patterns/summarize/system.md) (scannable structure without repetition), [Annika Lewis's claude-recap](https://github.com/annikalewis/claude-recap) (thematic grouping and honest light-session reporting), and [ProstDev's recap article](https://prostdev.com/post/recap-skills-catch-up-on-any-claude-session/) (separating reporting from execution). No upstream prose or code was copied. It uses only the current conversation, optional sections, a 200-word ceiling, and evidence-gated next steps rather than history scanning, fixed item quotas, or live-state refreshes.
 
 The local [Orca decision-card experiment](vendor/orca/decision-card/README.md) is original code, schema, documentation, and synthetic example data. Its README records the official documentation and released Orca protocol sources reviewed for compatibility; no upstream implementation or skill prose was copied.
+
+The local [wrap-up skill](skills/wrap-up/README.md) and its [Orca closeout reference](vendor/orca/wrap-up/README.md) are original instructions composed around the existing local commit, docs-review, and handoff workflows. No upstream prose or implementation was copied. The component README records official harness documentation, installed/released version checks, invocation-policy differences, and focused review scenarios; Orca lifecycle guidance remains an optional reference, not an installed integration or authorization to perform cleanup.
 
 The pstack imports other than `unslop` came through the [standalone mirror](https://github.com/backnotprop/pstack). Registry checks establish completeness, not license compliance or agreement with upstream contents.
