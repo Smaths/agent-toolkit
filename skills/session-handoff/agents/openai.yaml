@@ -1,4 +1,6 @@
 interface:
   display_name: "Session Handoff"
-  short_description: "Fresh session: validate, propose, then await approval"
-  default_prompt: "Use $session-handoff to write a reference-first restart brief and transfer it to a fresh session. Keep the same workspace and agent settings unless I specify overrides. The receiver should validate actual state, retrieve only necessary linked context, present a concise next-step proposal, and wait for my fresh approval before task work."
+  short_description: "Save a handoff and continue in a fresh session"
+  default_prompt: "Use $session-handoff to save the current context and continue in a fresh session, following the skill's launch and continuation rules."
+policy:
+  allow_implicit_invocation: false
