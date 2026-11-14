@@ -12,7 +12,7 @@ bin/                     Repository checks and optional setup
 
 Each skill has its own directory with a `SKILL.md`. Browse [portable skills](skills/) or tools for [Claude](vendor/claude/) and [Pi](vendor/pi/).
 
-Examples include [swarm](skills/swarm/SKILL.md), [session handoff](skills/session-handoff/SKILL.md) with its [Pi adapter](vendor/pi/extensions/session-handoff/README.md), the [Claude status-line](vendor/claude/status-line/README.md), and the [Pi status-line](vendor/pi/extensions/status-line/README.md). [SOURCES.md](SOURCES.md) credits imported work and records local changes.
+Examples include [swarm](skills/swarm/SKILL.md), [session handoff](skills/session-handoff/SKILL.md) and the separate [legacy Pi adapter](vendor/pi/extensions/session-handoff/README.md), the [Claude status-line](vendor/claude/status-line/README.md), and the [Pi status-line](vendor/pi/extensions/status-line/README.md). [SOURCES.md](SOURCES.md) credits imported work and records local changes.
 
 Adding a tool to this repository does not enable it on your computer. See [AGENTS.md](AGENTS.md) for contribution instructions and [computer enablement](AGENTS.md#enable-on-this-computer).
 

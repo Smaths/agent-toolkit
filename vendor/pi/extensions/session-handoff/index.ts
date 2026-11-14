@@ -5,6 +5,6 @@ import { installHandoff } from "./runtime.mjs";
 
 export default function (pi: ExtensionAPI) {
   installHandoff(pi, Type, {
-    skillPath: fileURLToPath(new URL("../../../../skills/session-handoff/SKILL.md", import.meta.url)),
+    skillPath: fileURLToPath(new URL("../../../../skills/session-handoff/legacy-workflow.md", import.meta.url)),
   });
 }

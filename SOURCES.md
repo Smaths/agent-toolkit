@@ -8,11 +8,16 @@ The YAML registry is checked by `bin/check`. Declare every skill as local or imp
 local:
   - skills/commit
   - skills/recap
-  - skills/session-handoff
   - skills/sync-docs
   - skills/unslop-for-agents
   - skills/verification-readiness
 imports:
+  - author: Matt Pocock
+    source: https://github.com/mattpocock/skills
+    revision: "5863806dd4e15c63174bee4e7515a4256792ecfa"
+    license: MIT
+    artifacts:
+      skills/session-handoff: Imports skills/productivity/handoff/SKILL.md as the baseline. Retains the session-handoff name and makes suggested-skills wording portable instead of requiring a Skill tool. Adds persistent home-directory handoffs, unique filenames, working-directory and next-task context, and fresh interactive launch through an existing host with a manual command fallback. Adds a plain-text startup template shared by automatic and manual pickup. The receiver proceeds with safe read-only work while preserving constraints and authorization. Keeps the enhanced workflow in SKILL.md. Preserves the original local launch workflow, references, helpers and tests for the separate Pi adapter; the new skill does not load them.
   - author: Mario Zechner
     source: https://github.com/earendil-works/pi
     revision: "v1.4.0"

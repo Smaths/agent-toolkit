@@ -5,14 +5,14 @@ Use this for a fresh interactive session in a new terminal. The harness receives
 ## Prepare the command
 
 1. Apply [preflight.md](preflight.md) on the execution host. Resolve the installed executable, version, positional-prompt support, exact settings, destination shell and checkout. Use the documented interactive invocation, not one-shot modes such as `--print` or `codex exec`, or JSON/RPC interfaces. Keep stdin and stdout attached to a terminal; redirecting either can select one-shot mode. If required settings or shell behavior are unknown, save the brief and report the blocker instead of guessing a command.
-2. Use the short [startup prompt](../SKILL.md#4-deliver-once-and-stop), with the brief's absolute path. Keep private task context in the brief outside the checkout. Arguments can appear in process listings, shell history and launcher logs, so the path and prompt must contain no secrets. Start the prompt with an instruction such as `Read`, not an option, slash command or file-attachment shorthand.
+2. Use the short [startup prompt](../legacy-workflow.md#4-deliver-once-and-stop), with the brief's absolute path. Keep private task context in the brief outside the checkout. Arguments can appear in process listings, shell history and launcher logs, so the path and prompt must contain no secrets. Start the prompt with an instruction such as `Read`, not an option, slash command or file-attachment shorthand.
 3. Build an argument list containing the resolved executable, supported settings and one unchanged prompt argument. Use the [agent profiles](preflight.md#agent-profiles) for native differences. Omit all continue, resume, fork and existing-session selectors. Keep the normal trust and permission policy; do not add credentials or bypass flags.
 4. Quote each argument for the destination shell. For a known POSIX shell, use `shlex.join(argv)` when Python is available, or single-quote each argument and encode an embedded apostrophe as `'"'"'`. Prefix the quoted command with `exec` to replace the shell. If passing the command as another CLI's `--command` argument, quote that entire string again for the invoking shell. Do not interpolate user-provided shell fragments. Other shells need their own documented quoting. If it cannot be established, save the brief and ask for a supported shell; do not invent a manual command.
 
 For example, this is the command text for a POSIX destination shell, not the outer terminal-launch command. Replace every placeholder with verified, nonsecret values:
 
 ```sh
-exec '/absolute/path/to/pi' --provider 'provider-id' --model 'exact-model-id' --thinking 'high' 'Read /private/state/handoff.md and follow Receiver startup. Inspect read-only, propose the next step, ask for fresh approval, then stop before tests or edits.'
+exec '/absolute/path/to/pi' --provider 'provider-id' --model 'exact-model-id' --thinking 'high' 'Read /private/state/handoff.md and follow Receiver startup. Validate state and follow its safe read-only first-step rule; ask for fresh approval before other work.'
 ```
 
 Native flags establish requested settings. Pi can fuzzy-match a model and clamp its thinking level; Claude aliases can change. Preserve exact IDs and compatible values, and report effective settings as unconfirmed unless independently observed.
@@ -32,7 +32,7 @@ Check observable process/cwd/settings against the saved command and checkout wit
 
 ## Approval limit
 
-External startup has an instruction-only task-approval boundary unless the selected runtime independently enforces one. The receiver must inspect read-only, propose and wait for fresh approval. Normal startup can still execute configured hooks/extensions and write session records before the model follows that instruction. A fresh conversation does not disable project instructions, configuration or memory. If a hard gate is required, use a verified gated route such as the distinct same-terminal [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md), or stop and ask.
+External startup has an instruction-only task-approval boundary unless the selected runtime independently enforces one. The receiver follows the [Receiver startup](../legacy-workflow.md#3-save-and-check) rule: automatically complete one qualifying safe read-only first step, and obtain fresh approval for other work. Normal startup can still execute configured hooks/extensions and write session records before the model follows that instruction. A fresh conversation does not disable project instructions, configuration or memory. If a hard gate is required, use a verified gated route such as the distinct same-terminal [Pi adapter](../../../vendor/pi/extensions/session-handoff/README.md), or stop and ask.
 
 ## Documentation checked
 
