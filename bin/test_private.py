@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Isolated gate tests; optional real Gitleaks integration, no local hook installs."""
+"""Isolated gate tests with no local hook installs.
+
+Use --real to add pinned Gitleaks integration tests, or --real -k test_real_
+for just the integration tests.
+"""
 import json
 import os
 from pathlib import Path
@@ -144,7 +148,7 @@ else:
         self.check()
 
     @unittest.skipUnless(REAL, "pass --real for pinned Gitleaks integration")
-    def test_symlinks_are_not_followed(self):
+    def test_real_symlinks_are_not_followed(self):
         self.use_real_scanner()
         (self.root / "outside").write_text("token = '" + SECRET + "'\n")
         (self.repo / "link").symlink_to(self.root / "outside")

@@ -35,16 +35,14 @@ class SyncTests(unittest.TestCase):
         self.old_claude = self.root / ".claude/skills/docs-reality-sync"
         self.old_codex = self.root / ".codex/skills/docs-reality-sync"
         self.old_prompt = self.root / ".pi/agent/prompts/docs-reality-sync.md"
-        self.mod = self.root / ".skills/vendor/claude/mods/ctx"
-        (self.mod / ".claude-plugin").mkdir(parents=True)
-        (self.mod / ".claude-plugin/plugin.json").write_text('{"name":"ctx"}\n')
-        self.installed_mod = self.root / ".claude/skills/ctx"
+        self.ctx_source = self.checkout / "vendor/claude/mods/ctx"
+        self.ctx = self.root / ".claude/skills/ctx"
         self.legacy.parent.mkdir(parents=True)
 
     def run_sync(self, *options):
         return subprocess.run(
             ["bash", str(self.script), *options, str(self.root)],
-            capture_output=True, text=True,
+            env=dict(os.environ, HOME=str(self.root)), capture_output=True, text=True,
         )
 
     def test_migration_and_repeat_run(self):
@@ -66,8 +64,6 @@ class SyncTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(self.shared.resolve(), self.skill)
             self.assertEqual(self.claude.resolve(), self.skill)
-            self.assertFalse(self.installed_mod.is_symlink())
-            self.assertFalse((self.root / ".agents/skills/claude-mods").exists())
             self.assertFalse(self.prompt.is_symlink())
             self.assertFalse(self.legacy.is_symlink())
             self.assertFalse((self.shared.parent / "bin").exists())
@@ -117,7 +113,7 @@ class SyncTests(unittest.TestCase):
         (self.root / ".agent-toolkit").unlink()
         result = subprocess.run(
             ["bash", str(self.script), "--dry-run", str(self.root)],
-            cwd=self.root, capture_output=True, text=True,
+            cwd=self.root, env=dict(os.environ, HOME=str(self.root)), capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(f"LINK {self.shared}", result.stdout)
@@ -135,32 +131,14 @@ class SyncTests(unittest.TestCase):
         self.legacy.symlink_to("../../.skills/example/")
         self.prompt.parent.mkdir(parents=True)
         self.prompt.symlink_to("../../../.skills/example/SKILL.md")
-        self.installed_mod.symlink_to("../../.skills/claude-mods/ctx/")
 
         for _ in range(2):
             result = self.run_sync()
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(self.shared.resolve(), self.skill)
             self.assertEqual(self.claude.resolve(), self.skill)
-            self.assertFalse(self.installed_mod.is_symlink())
             self.assertFalse(self.legacy.is_symlink())
             self.assertFalse(self.prompt.is_symlink())
-
-    def test_orca_skill_is_migrated_and_linked(self):
-        skill = self.root / ".skills/vendor/orca/skills/swarm"
-        skill.mkdir(parents=True)
-        (skill / "SKILL.md").write_text("Orca skill\n")
-        links = []
-        for agent in (".agents", ".claude"):
-            link = self.root / agent / "skills/swarm"
-            link.parent.mkdir(parents=True, exist_ok=True)
-            link.symlink_to(self.root / ".skills/swarm")
-            links.append(link)
-        for _ in range(2):
-            result = self.run_sync("--with-orca")
-            self.assertEqual(result.returncode, 0, result.stderr)
-            for link in links:
-                self.assertEqual(link.resolve(), skill.resolve())
 
     def test_portable_swarm_migrates_owned_vendor_links(self):
         skill = self.root / ".skills/skills/swarm"
@@ -200,13 +178,15 @@ class SyncTests(unittest.TestCase):
         link.symlink_to(old)
         conflict = self.root / ".claude/skills/swarm"
         conflict.parent.mkdir(parents=True)
-        conflict.write_text("Keep me\n")
+        separate_swarm = self.root / "my-swarm"
+        separate_swarm.mkdir()
+        conflict.symlink_to(separate_swarm)
 
         result = self.run_sync()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Refusing to replace", result.stderr)
         self.assertEqual(link.readlink(), old)
-        self.assertEqual(conflict.read_text(), "Keep me\n")
+        self.assertEqual(conflict.readlink(), separate_swarm)
 
     def test_unconfigured_vendor_and_root_skills_are_skipped(self):
         for path in (".skills/root-skill", ".skills/vendor/other/skills/other"):
@@ -245,34 +225,110 @@ class SyncTests(unittest.TestCase):
 
     def test_conflicting_destinations_remain_untouched(self):
         self.legacy.symlink_to(self.skill)
+        self.ctx.parent.mkdir(parents=True)
+        self.ctx.symlink_to(self.ctx_source)
         for destination in (self.shared, self.claude):
             with self.subTest(destination=destination):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_text("Keep me\n")
-                result = self.run_sync()
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("Refusing to replace", result.stderr)
-                self.assertEqual(destination.read_text(), "Keep me\n")
-                self.assertFalse((self.claude if destination == self.shared else self.shared).exists())
-                self.assertFalse(self.installed_mod.exists())
-                self.assertTrue(self.legacy.is_symlink())
+                for options in (("--dry-run",), ()):
+                    result = self.run_sync(*options)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("Refusing to replace", result.stderr)
+                    self.assertNotIn(f"REMOVE {self.ctx}", result.stdout.splitlines())
+                    self.assertEqual(destination.read_text(), "Keep me\n")
+                    self.assertFalse((self.claude if destination == self.shared else self.shared).exists())
+                    self.assertEqual(self.ctx.readlink(), self.ctx_source)
+                    self.assertTrue(self.legacy.is_symlink())
                 destination.unlink()
 
-    def test_separate_mod_path_is_preserved(self):
-        self.installed_mod.parent.mkdir(parents=True, exist_ok=True)
-        self.installed_mod.mkdir()
-        result = self.run_sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertTrue(self.installed_mod.is_dir())
-        self.assertEqual(self.shared.resolve(), self.skill)
-        self.assertEqual(self.claude.resolve(), self.skill)
+    def test_retired_ctx_link_is_removed_without_a_manifest(self):
+        (self.root / ".skills").unlink()
+        (self.root / ".agent-toolkit").unlink()
+        ctx = self.ctx
+        ctx.parent.mkdir(parents=True)
+        shared_ctx = self.shared.with_name("ctx")
+        shared_ctx.parent.mkdir(parents=True)
+        shared_ctx.symlink_to(self.ctx_source)
+        for location in (self.checkout, Path("../../.skills"), Path("../../.agent-toolkit")):
+            for layout in ("vendor/claude/mods/ctx", "claude-mods/ctx"):
+                target = location / layout
+                with self.subTest(target=target):
+                    ctx.symlink_to(target)
+                    try:
+                        self.assertFalse(ctx.exists(), "Old ctx source should be gone")
+                        preview = self.run_sync("--dry-run")
+                        self.assertEqual(preview.returncode, 0, preview.stderr)
+                        self.assertIn(f"REMOVE {ctx}", preview.stdout.splitlines())
+                        self.assertEqual(ctx.readlink(), target)
 
-    def test_directory_without_plugin_manifest_is_skipped(self):
-        other = self.root / ".skills/vendor/claude/mods/notes"
-        other.mkdir()
-        result = self.run_sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse((self.root / ".claude/skills/notes").exists())
+                        result = self.run_sync()
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertCountEqual(result.stdout.splitlines(), preview.stdout.splitlines())
+                        self.assertFalse(os.path.lexists(ctx))
+
+                        repeat = self.run_sync()
+                        self.assertEqual(repeat.returncode, 0, repeat.stderr)
+                        self.assertNotIn(f"REMOVE {ctx}", repeat.stdout.splitlines())
+                    finally:
+                        if ctx.is_symlink():
+                            ctx.unlink()
+        self.assertEqual(shared_ctx.readlink(), self.ctx_source)
+
+    def test_unrelated_ctx_installations_are_preserved(self):
+        self.ctx.parent.mkdir(parents=True)
+        other = self.root / "other"
+        layout = "vendor/claude/mods/ctx"
+        (other / layout).mkdir(parents=True)
+        (other / "nested").mkdir()
+        (self.checkout / "alias").symlink_to(other / "nested", target_is_directory=True)
+        targets = {
+            "symlink": other / layout,
+            "broken symlink": self.ctx_source.with_name("ctx\n"),
+            "symlink through another tree": self.checkout / "alias/.." / layout,
+        }
+        for kind in ("file", "directory", *targets):
+            with self.subTest(kind=kind):
+                if kind == "file":
+                    expected = "Keep me\n"
+                    self.ctx.write_text(expected)
+                    read_installed = self.ctx.read_text
+                elif kind == "directory":
+                    expected = "My skill\n"
+                    self.ctx.mkdir()
+                    skill = self.ctx / "SKILL.md"
+                    skill.write_text(expected)
+                    read_installed = skill.read_text
+                else:
+                    expected = targets[kind]
+                    self.ctx.symlink_to(expected)
+                    read_installed = self.ctx.readlink
+                try:
+                    for options in (("--dry-run",), ()):
+                        result = self.run_sync(*options)
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertNotIn(f"REMOVE {self.ctx}", result.stdout.splitlines())
+                        self.assertEqual(read_installed(), expected)
+                finally:
+                    if self.ctx.is_symlink() or self.ctx.is_file():
+                        self.ctx.unlink()
+                    elif self.ctx.is_dir():
+                        shutil.rmtree(self.ctx)
+
+    def test_unrelated_relative_ctx_link_under_symlinked_agent_root_is_preserved(self):
+        other_root = self.root / "other"
+        (other_root / "claude/skills").mkdir(parents=True)
+        self.ctx.parent.parent.symlink_to(other_root / "claude", target_is_directory=True)
+        other_ctx = other_root / ".skills/vendor/claude/mods/ctx"
+        other_ctx.mkdir(parents=True)
+        target = Path("../../.skills/vendor/claude/mods/ctx")
+        self.ctx.symlink_to(target)
+        self.assertEqual(self.ctx.resolve(strict=True), other_ctx)
+        for options in (("--dry-run",), ()):
+            result = self.run_sync(*options)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotIn(f"REMOVE {self.ctx}", result.stdout.splitlines())
+            self.assertEqual(self.ctx.readlink(), target)
 
     def test_broken_shared_link_is_preserved(self):
         self.shared.parent.mkdir(parents=True)
@@ -281,7 +337,6 @@ class SyncTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.shared.readlink(), Path("missing"))
         self.assertFalse(self.claude.exists())
-        self.assertFalse(self.installed_mod.exists())
 
     def test_renamed_skill_links_are_removed(self):
         links = (
@@ -387,16 +442,16 @@ class SyncTests(unittest.TestCase):
     def test_preview_lists_changes_without_writing_anything(self):
         self.old_shared.parent.mkdir(parents=True)
         self.old_shared.symlink_to(self.old_skill)
-        self.installed_mod.parent.mkdir(parents=True)
-        self.installed_mod.symlink_to(self.mod)
+        self.ctx.parent.mkdir(parents=True)
+        self.ctx.symlink_to(self.ctx_source)
         for _ in range(2):
             result = self.run_sync("--dry-run")
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn(f"LINK {self.shared}", result.stdout)
             self.assertIn(f"REMOVE {self.old_shared}", result.stdout)
-            self.assertIn(f"REMOVE {self.installed_mod}", result.stdout)
+            self.assertIn(f"REMOVE {self.ctx}", result.stdout)
             self.assertTrue(self.old_shared.is_symlink())
-            self.assertTrue(self.installed_mod.is_symlink())
+            self.assertEqual(self.ctx.readlink(), self.ctx_source)
             self.assertFalse(self.shared.exists())
             self.assertFalse(self.claude.exists())
 
@@ -409,29 +464,6 @@ class SyncTests(unittest.TestCase):
         self.assertIn(f"LINK {self.claude}", result.stdout)
         self.assertEqual(self.shared.read_text(), "Keep me\n")
         self.assertFalse(self.claude.parent.exists())
-
-    def test_orca_is_opt_in_and_owned_links_are_removed_by_default(self):
-        skill = self.root / ".skills/vendor/orca/skills/swarm"
-        skill.mkdir(parents=True)
-        (skill / "SKILL.md").write_text("Orca skill\n")
-        shared = self.root / ".agents/skills/swarm"
-        claude = self.root / ".claude/skills/swarm"
-        result = self.run_sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(shared.exists())
-        self.assertFalse(claude.exists())
-        result = self.run_sync("--with-orca")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(shared.resolve(), skill.resolve())
-        self.assertEqual(claude.resolve(), skill.resolve())
-        result = self.run_sync("--dry-run")
-        self.assertIn(f"REMOVE {shared}", result.stdout)
-        self.assertIn(f"REMOVE {claude}", result.stdout)
-        self.assertTrue(shared.is_symlink())
-        result = self.run_sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(shared.is_symlink())
-        self.assertFalse(claude.is_symlink())
 
     def test_symlinked_skills_root_is_refused(self):
         outside = self.root / "outside"
@@ -470,43 +502,27 @@ class SyncTests(unittest.TestCase):
                     finally:
                         root.unlink()
 
-    def test_duplicate_source_names_fail_before_writes(self):
-        skill = self.root / ".skills/vendor/orca/skills/example"
-        skill.mkdir(parents=True)
-        (skill / "SKILL.md").write_text("Orca skill\n")
-        result = self.run_sync("--with-orca")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Duplicate skill name", result.stderr)
-        self.assertFalse(self.shared.parent.exists())
-
     def test_destination_home_does_not_need_a_checkout(self):
         empty_home = self.root / "empty"
         empty_home.mkdir()
         result = subprocess.run(
-            ["bash", str(self.script), str(empty_home)], capture_output=True, text=True,
+            ["bash", str(self.script), str(empty_home)],
+            env=dict(os.environ, HOME=str(self.root)), capture_output=True, text=True,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((empty_home / ".agents/skills/example").resolve(), self.skill)
         self.assertEqual((empty_home / ".claude/skills/example").resolve(), self.skill)
-
-    def test_opt_in_requires_orca_skill(self):
-        result = self.run_sync("--with-orca")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("No Orca skills", result.stderr)
         self.assertFalse(self.shared.parent.exists())
+        self.assertFalse(self.claude.parent.exists())
 
-    def test_unrelated_orca_link_is_preserved(self):
-        skill = self.root / ".skills/vendor/orca/skills/swarm"
-        skill.mkdir(parents=True)
-        (skill / "SKILL.md").write_text("Orca skill\n")
-        link = self.root / ".agents/skills/swarm"
-        link.parent.mkdir(parents=True)
-        other = self.root / "my-swarm"
-        other.mkdir()
-        link.symlink_to(other)
-        result = self.run_sync()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(link.resolve(), other)
+    def test_obsolete_with_orca_is_rejected_without_writes(self):
+        before = set(self.root.iterdir())
+        result = self.run_sync("--with-orca")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("[--dry-run] [home]", result.stderr)
+        self.assertNotIn("--with-orca", result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(set(self.root.iterdir()), before)
 
 
 class CheckoutSyncTests(unittest.TestCase):

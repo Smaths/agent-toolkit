@@ -1,70 +1,63 @@
 # Agent toolkit
 
-Skills, extensions, and workflows I use for software development with agents. Portable skills work across agents; vendor-specific tools live in their own folders.
+My collection of skills, extensions, and workflows for building software with agents.
 
-## Explore
+## Quickstart
 
-```text
-skills/                  Portable skills
-vendor/<vendor>/         Vendor-specific tools and integrations
-bin/                     Repository checks and optional setup
+Use Git to clone the repository. Sync needs Bash and Python 3. See [Sync on Debian](#sync-on-debian) for package names. Clone into a directory you plan to keep, since the installed skills link back to the checkout.
+
+```bash
+git clone https://github.com/Smaths/agent-toolkit.git
+cd agent-toolkit
+bin/sync.sh --dry-run
 ```
 
-Each skill has its own directory with a `SKILL.md`. Browse [portable skills](skills/) or tools for [Claude](vendor/claude/) and [Pi](vendor/pi/).
+The preview does not change any files. Review the proposed changes before running `bin/sync.sh` as your regular user to apply them. See [what sync changes](AGENTS.md#enable-on-this-computer) for details. Vendor tools have their own setup instructions.
 
-Examples include [swarm](skills/swarm/SKILL.md), [session handoff](skills/session-handoff/SKILL.md) and the separate [legacy Pi adapter](vendor/pi/extensions/session-handoff/README.md), the [Claude status-line](vendor/claude/status-line/README.md), and the [Pi status-line](vendor/pi/extensions/status-line/README.md). [SOURCES.md](SOURCES.md) credits imported work and records local changes.
+## Portable skills
 
-Adding a tool to this repository does not enable it on your computer. See [AGENTS.md](AGENTS.md) for contribution instructions and [computer enablement](AGENTS.md#enable-on-this-computer).
+### Writing and documentation
+
+- [html-report](skills/html-report/SKILL.md). Create a standalone HTML investigation or decision report using the Snarfum design system.
+- [sync-docs](skills/sync-docs/SKILL.md). Review or update documentation against what the project does.
+- [unslop](skills/unslop/SKILL.md). Cut filler and stock AI phrasing while keeping the meaning and tone.
+- [unslop-for-agents](skills/unslop-for-agents/SKILL.md). Rewrite agent instructions in plain language without changing their behavior.
+- [writing-for-agents](skills/writing-for-agents/SKILL.md). Write clear instructions that tell an agent when to act and how to tell it's done.
+
+### Code and tests
+
+- [benchmark-checklist](skills/benchmark-checklist/SKILL.md). Check that a benchmark measures the right work and gives repeatable results.
+- [commit](skills/commit/SKILL.md). Group related changes and write Conventional Commits.
+- [diagnosing-bugs](skills/diagnosing-bugs/SKILL.md). Reproduce a bug and test likely causes before choosing a fix.
+- [tdd](skills/tdd/SKILL.md). Write a failing test before fixing a bug when a focused test is practical.
+
+### Planning and delegation
+
+- [grilling](skills/grilling/SKILL.md). Stress-test a plan or decision with pointed questions.
+- [swarm](skills/swarm/SKILL.md). Run independent workers on request and combine their findings.
+- [verification-readiness](skills/verification-readiness/SKILL.md). Prepare a coding brief with a runnable check and the evidence the worker should return.
+
+### Session notes and handoffs
+
+- [recap](skills/recap/SKILL.md). Summarize the current conversation.
+- [session-handoff](skills/session-handoff/SKILL.md). Save a handoff so a fresh agent session can continue the work.
+
+## Vendor tools
+
+- [Claude Code tools](vendor/claude/), including the [status line](vendor/claude/status-line/README.md)
+- [Pi tools](vendor/pi/extensions/), including the [status line](vendor/pi/extensions/status-line/README.md) and [same-terminal handoff adapter](vendor/pi/extensions/session-handoff/README.md)
+
+See [SOURCES.md](SOURCES.md) for credits and local changes, and [AGENTS.md](AGENTS.md) for contribution instructions.
 
 ## Sync on Debian
 
-On Debian 12 (Bookworm) and 13 (Trixie), sync needs a populated checkout and the system Bash, coreutils, and Python 3. On a minimal install, install any missing packages with `apt-get install bash coreutils python3` as root. Sync itself runs as your regular user and does not need Node.js, a Python virtual environment, or any agent CLI.
+Sync needs a populated checkout, Bash, coreutils, and Python 3. If packages are missing, run `apt-get install bash coreutils python3` as root. Run sync itself as your regular user. It does not need Node.js, a Python virtual environment, or an agent CLI.
 
-Follow the [preview and apply instructions](AGENTS.md#enable-on-this-computer). To verify without touching your home directory, run `python3 bin/test_sync.py -v` from the checkout. CI runs this suite on both Debian releases, including preview, apply, and repeat apply against the real checkout in a temporary home.
-
-## Secret and privacy checks
-
-Keep private evidence outside the checkout; see [the policy](AGENTS.md#public-checkout-privacy). The shared `bin/check-private` gate requires Git 2.41+, Python 3, and native Gitleaks Git scanning with built-in rules. [The pin file](bin/gitleaks-pin.json) is the single source for the required version and CI archive checksum. Missing/wrong scanner versions, scanner/Git errors, shallow history, and unsupported submodules/non-commit targets block the check.
-
-- **Pre-commit:** scans staged additions with `gitleaks git --staged`, including partial staging—not unstaged or untracked content. The privacy denylist checks the complete staged tree.
-- **Pre-push:** scans each outgoing commit range, including intermediate commits and merge patches. New refs or unknown remote tips conservatively scan all reachable history. Multiple refs, force pushes, and deletion-only pushes are handled.
-- **CI:** scans all history reachable from the checked-out commit with the same gate; this may flag older history.
-
-Git replacement objects and committed attributes are ignored, and Git patch color is disabled for scanning. No snapshots or report files are written. Findings show only file, line, rule, and commit; source text, secret values, author details, and raw scanner logs are withheld, with scanner redaction also enabled.
-
-The small path denylist blocks `.local-artifacts/`, `transcripts/`, `screenshots/`, `live-sessions/`, `config-exports/`, `.env`/`.env.*`, common credential filenames, HAR captures, and key containers.
-
-Coverage is source-file changes—not commit/tag messages, binary contents, or arbitrary private prose. Gitleaks' default path allowlist is inherited, including SVG, lockfiles, `node_modules/`, and paths matching `gitleaks.toml`. Reviewed summaries and synthetic fixtures remain necessary even when checks pass.
-
-### Enable locally (explicit opt-in)
-
-Install the version in [the pin file](bin/gitleaks-pin.json) from [Gitleaks releases](https://github.com/gitleaks/gitleaks/releases) on PATH, verifying the checksum for your platform. Then inspect existing hooks before opting in:
-
-```bash
-git config --show-origin --get core.hooksPath
-ls "$(git rev-parse --git-path hooks)"
-# Only after preserving/integrating any existing hooks:
-git config --local core.hooksPath .githooks
-bin/check-private staged
-```
-
-The setting can affect sibling worktrees sharing this repository's local config. Do not overwrite another hooks setup blindly. Hooks are not installed by `bin/sync.sh`, and clones must opt in separately. Offline checker tests run with `python3 bin/test_private.py`; add `--real` to also exercise the pinned Gitleaks on PATH in temporary repositories.
-
-### Update the scanner
-
-Update the version and Linux x64 archive SHA-256 together in `bin/gitleaks-pin.json` from the official release; local tool upgrades remain manual. With that version on PATH, run `python3 bin/test_private.py --real` and `bin/check-private history`, then review the change normally.
-
-### GitHub enforcement
-
-This personal repository allows direct pushes and merge commits to `main`; pull requests and CI checks, including **Secret and privacy**, are advisory rather than required. Keep signed commits, force-push protection, and branch-deletion protection enabled in the default-branch ruleset. Keep GitHub secret scanning and push protection enabled as independent server-side safeguards. Workflow files alone do not enforce branch rules; verify those settings on GitHub.
-
-CI catches skipped/uninstalled hooks **after upload**, not before public exposure. Hooks are bypassable and no scanner guarantees that all private information is caught. If a real credential is published, revoke/rotate it first; deleting it in a later commit is insufficient.
-
-Implementation references: [Git hook protocol](https://git-scm.com/docs/githooks), [Gitleaks usage/configuration](https://github.com/gitleaks/gitleaks#usage). No agent-harness configuration is changed.
+Run `python3 bin/test_sync.py -v` to test sync in a temporary home. The [Debian sync workflow](.github/workflows/debian-sync.yml) runs the suite on Debian 12 and 13 for changes to sync, its tests, the workflow, or portable `SKILL.md` files. It can also run on demand.
 
 ## Checks
 
-With Python 3, Bash, Git, and Node.js 22.19+ available, install the check dependencies once and run the offline suite:
+The offline suite requires Python 3, Bash, Git, and Node.js 22.19 or later. Set up the Python environment and run the same command CI uses:
 
 ```bash
 python3 -m venv .venv
@@ -73,6 +66,6 @@ source .venv/bin/activate
 bin/check
 ```
 
-CI also runs `bin/check`. It checks skill layout, links, attribution, and syntax, then runs offline tests. For static validation without running test suites, use `bin/check --static`.
+Use `bin/check --static` to validate skill layout, local link targets (not heading anchors), attribution, and syntax without running the test suites. The offline suite includes sync and the native Pi handoff adapter. The [legacy external handoff checks](skills/session-handoff/tests/README.md) are opt-in. The tests do not enable tools, launch agents, or evaluate model behavior.
 
-The suite includes Pi helper-package contracts, handoff tests using temporary repositories and a mocked runtime, and status-line layout, Git status, and cost/lifecycle regressions. The checks do not enable tools, launch agents, or evaluate model behavior. Component READMEs describe additional, opt-in checks.
+See [SECURITY.md](SECURITY.md) for secret and privacy checks before publishing.

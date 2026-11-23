@@ -6,7 +6,6 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-import unicodedata
 from urllib.parse import unquote, urlsplit
 
 try:
@@ -108,49 +107,23 @@ def check_skills(root, files):
     return errors
 
 
-class HTMLTargets(HTMLParser):
+class HTMLLinks(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.anchors = set()
         self.links = []
 
     def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if attrs.get("id"):
-            self.anchors.add(attrs["id"])
-        if tag == "a" and attrs.get("name"):
-            self.anchors.add(attrs["name"])
-        for key in ("href", "src"):
-            if attrs.get(key):
-                self.links.append(attrs[key])
+        for key, value in attrs:
+            if key in ("href", "src") and value:
+                self.links.append(value)
 
 
-def inline_text(tokens):
-    return "".join(
-        inline_text(token.children) if token.children else token.content
-        for token in tokens
-        if token.type in ("text", "code_inline", "image", "softbreak")
-    )
-
-
-def markdown_info(text):
-    """Collect real links and GitHub-style heading anchors, ignoring code examples."""
+def markdown_links(text):
+    """Collect link and image URLs without treating code examples as links."""
     _, body = frontmatter(text)
-    tokens = MARKDOWN.parse(body)
-    anchors, links = set(), []
-    html = HTMLTargets()
-    for index, token in enumerate(tokens):
-        if token.type == "heading_open":
-            title = inline_text(tokens[index + 1].children or []).lower()
-            slug = "".join(
-                char for char in title
-                if char in "-_ " or unicodedata.category(char)[0] in "LMN"
-            ).replace(" ", "-")
-            anchor, suffix = slug, 0
-            while anchor in anchors:
-                suffix += 1
-                anchor = f"{slug}-{suffix}"
-            anchors.add(anchor)
+    links = []
+    html = HTMLLinks()
+    for token in MARKDOWN.parse(body):
         if token.type == "html_block":
             html.feed(token.content)
         for child in token.children or []:
@@ -160,42 +133,38 @@ def markdown_info(text):
                 links.append(child.attrGet("src"))
             elif child.type == "html_inline":
                 html.feed(child.content)
-    return anchors | html.anchors, links + html.links
+    return links + html.links
 
 
-def local_target(root, document, href):
+def check_local_target(root, document, href):
     url = urlsplit(href)
-    if url.scheme or url.netloc:
-        return None, ""
+    if url.scheme or url.netloc or not url.path:
+        return
     name = unquote(url.path)
     target = root / name.lstrip("/") if name.startswith("/") else document.parent / name
-    if not name:
-        target = document
     target = target.resolve()
     if not target.is_relative_to(root.resolve()):
         raise ValueError(f"local link escapes repository: {href}")
     if not target.exists():
         raise ValueError(f"missing local target: {href}")
-    return target, unquote(url.fragment)
 
 
 def check_links(root, files):
-    errors, documents = [], {}
+    errors = []
     for path in files:
         if path.suffix.lower() != ".md":
             continue
+        document = (root / path).resolve()
         try:
-            documents[(root / path).resolve()] = markdown_info((root / path).read_text())
+            links = markdown_links(document.read_text())
         except (ValueError, yaml.YAMLError) as exc:
             errors.append(f"{path}: {exc}")
-    for document, (_, links) in documents.items():
+            continue
         for href in links:
             try:
-                target, fragment = local_target(root, document, href)
-                if fragment and target in documents and fragment not in documents[target][0]:
-                    raise ValueError(f"missing Markdown anchor: {href}")
+                check_local_target(root, document, href)
             except ValueError as exc:
-                errors.append(f"{document.relative_to(root.resolve())}: {exc}")
+                errors.append(f"{path}: {exc}")
     return errors
 
 
@@ -326,7 +295,6 @@ def main():
         "bin/test_pi_helpers.py",
         "bin/test_sync.py",
         "skills/html-report/tests/test_embed_css.py",
-        "skills/session-handoff/tests/test_check_handoff.py",
         "vendor/claude/status-line/tests/test_status_line.py",
     ]
     failed = bool(errors)

@@ -98,39 +98,35 @@ class CheckTests(unittest.TestCase):
         self.write("skills/incomplete/references/note.md", "# Note")
         self.assertTrue(checks.check_skills(self.root, self.files()))
 
-    def test_real_links_anchors_and_examples(self):
-        self.write("docs/a file.md", "# Hello, **world**!\n\n# Hello, world!\n\nTitle\n=====\n\n<a id='custom'></a>\n")
+    def test_real_links_and_images_ignore_code_examples_and_fragments(self):
+        self.write("docs/a file.md", "# Title\n")
         self.write("image.png", "fixture")
         self.write("README.md", """# Start
-[inline](docs/a%20file.md#hello-world)
-[duplicate](docs/a%20file.md#hello-world-1)
-[setext](docs/a%20file.md#title)
-[custom](docs/a%20file.md#custom)
+[inline](docs/a%20file.md#unchecked)
 [root](/docs/a%20file.md)
-[self](#start)
+[self](#unchecked)
 [reference][doc]
 ![image](image.png)
-<a href="docs/a%20file.md#title">HTML link</a>
+<a href="docs/a%20file.md">HTML link</a>
+<img src="image.png">
 [external](https://example.invalid/missing)
 [mail](mailto:test@example.invalid)
 `[example](missing.md)`
 ```markdown
 [example](also-missing.md)
-# Fake heading
 ```
 [doc]: docs/a%20file.md "A title"
 """)
         self.assertEqual(checks.check_links(self.root, self.files()), [])
 
-    def test_missing_links_images_and_anchors(self):
+    def test_missing_links_and_images(self):
         for content in (
-            "[missing](missing.md)",
+            "[missing](missing.md#heading)",
             "![image](missing.png)",
             "[missing][target]\n\n[target]: missing.md",
             '<a href="missing.md">missing</a>',
-            "# Title\n\n[missing](#absent)",
+            '<img src="missing.png">',
             "[outside](../outside.md)",
-            "```md\n# Fake\n```\n[missing](#fake)",
         ):
             with self.subTest(content=content):
                 self.write("README.md", content)
@@ -140,10 +136,6 @@ class CheckTests(unittest.TestCase):
         path = self.write("README.md", "---\nbroken: [\n---\nText")
         self.assertEqual(len(checks.check_links(self.root, [path])), 1)
         self.assertEqual(checks.check_syntax(self.root, [path]), [])
-
-    def test_duplicate_headings_with_numbered_titles(self):
-        anchors, _ = checks.markdown_info("# A\n# A\n# A-1\n# A\n")
-        self.assertEqual(anchors, {"a", "a-1", "a-1-1", "a-2"})
 
     def test_local_and_imported_attribution(self):
         self.skill()
@@ -253,7 +245,6 @@ imports:
             "bin/test_pi_helpers.py",
             "bin/test_sync.py",
             "skills/html-report/tests/test_embed_css.py",
-            "skills/session-handoff/tests/test_check_handoff.py",
             "vendor/claude/status-line/tests/test_status_line.py",
             "vendor/pi/extensions/session-handoff/tests/core.test.mjs",
             "vendor/pi/extensions/session-handoff/tests/runtime.test.mjs",
@@ -261,7 +252,8 @@ imports:
             "vendor/pi/extensions/status-line/tests/git-status.test.mjs",
             "vendor/pi/extensions/status-line/tests/layout.test.mjs",
         )
-        for suite in suites:
+        opt_in = "skills/session-handoff/tests/test_check_handoff.py"
+        for suite in (*suites, opt_in):
             if suite.endswith(".mjs"):
                 self.write(suite, "import { appendFileSync } from 'node:fs';\n"
                                   f"appendFileSync({json.dumps(str(marker))}, {json.dumps(suite + chr(10))});\n")

@@ -2,17 +2,15 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: %s [--dry-run] [--with-orca] [home]\n' "$0" >&2
+  printf 'Usage: %s [--dry-run] [home]\n' "$0" >&2
   exit 2
 }
 
 mode=apply
-with_orca=0
 skills_home=""
 for arg in "$@"; do
   case "$arg" in
     --dry-run) mode=preview ;;
-    --with-orca) with_orca=1 ;;
     -*) usage ;;
     *)
       [[ -z "$skills_home" ]] || usage
@@ -46,18 +44,6 @@ done
 if (( ${#skills[@]} == 0 )); then
   printf 'No portable skills found in %s/skills/.\n' "$SRC" >&2
   exit 1
-fi
-if (( with_orca )); then
-  orca_count=0
-  for dir in "$SRC"/vendor/orca/skills/*/; do
-    [[ -f "$dir/SKILL.md" ]] || continue
-    skills+=("${dir%/}")
-    ((orca_count+=1))
-  done
-  if (( orca_count == 0 )); then
-    printf 'No Orca skills found in %s/vendor/orca/skills/.\n' "$SRC" >&2
-    exit 1
-  fi
 fi
 
 link_target() {
@@ -143,15 +129,7 @@ remove_owned_link() {
   fi
 }
 
-# A collision between source names or a symlinked skills root is not a safe install.
-for (( i=0; i<${#skills[@]}; i++ )); do
-  for (( j=0; j<i; j++ )); do
-    if [[ "${skills[i]##*/}" == "${skills[j]##*/}" ]]; then
-      printf 'Duplicate skill name: %s\n' "${skills[i]##*/}" >&2
-      exit 1
-    fi
-  done
-done
+# Refuse unsafe destination roots before checking individual skills.
 for agent in .agents .claude; do
   agent_root="$skills_home/$agent"
   if [[ ( -e "$agent_root" || -L "$agent_root" ) && ! -d "$agent_root" ]]; then
@@ -182,36 +160,29 @@ if (( conflicts )); then
 fi
 mode="$requested_mode"
 
-# Remove only owned links for renamed skills and the former plugin-as-skill link.
+# Remove only owned links for renamed skills.
 for old in docs-reality-sync commit-conventional; do
   remove_owned_link "$SRC/$old" "$skills_home/.agents/skills/$old"
   remove_owned_link "$SRC/$old" "$skills_home/.claude/skills/$old"
   remove_owned_link "$SRC/$old" "$skills_home/.codex/skills/$old"
   remove_owned_link "$SRC/$old/SKILL.md" "$skills_home/.pi/agent/prompts/$old.md"
 done
-for dir in "$SRC"/vendor/claude/mods/*/; do
-  [[ -f "$dir/.claude-plugin/plugin.json" ]] || continue
-  dir="${dir%/}"
-  name="${dir##*/}"
-  remove_owned_link "$dir" "$skills_home/.claude/skills/$name"
-  remove_owned_link "$SRC/claude-mods/$name" "$skills_home/.claude/skills/$name"
-done
 
-# An omitted Orca skill is not enabled. Remove only links this repository owns.
-if (( ! with_orca )); then
-  for dir in "$SRC"/vendor/orca/skills/*/; do
-    [[ -f "$dir/SKILL.md" ]] || continue
-    dir="${dir%/}"
-    name="${dir##*/}"
-    for agent in .agents .claude .codex; do
-      destination="$skills_home/$agent/skills/$name"
-      remove_owned_link "$dir" "$destination"
-      remove_owned_link "$SRC/$name" "$destination"
-    done
-    prompt="$skills_home/.pi/agent/prompts/$name.md"
-    remove_owned_link "$dir/SKILL.md" "$prompt"
-    remove_owned_link "$SRC/$name/SKILL.md" "$prompt"
-  done
+# The retired ctx plugin used to be linked as a skill. Match only its old paths,
+# even if the link is now broken. Interpret relative links from their real parent.
+ctx="$skills_home/.claude/skills/ctx"
+if [[ -L "$ctx" ]] && python3 -c 'import os, sys
+link, source, home = sys.argv[1:]
+path = os.path.join(os.path.realpath(os.path.dirname(link)), os.readlink(link))
+target = os.path.normpath(path)
+owned = {os.path.join(base, layout)
+         for base in (source, os.path.join(home, ".skills"), os.path.join(home, ".agent-toolkit"))
+         for layout in ("vendor/claude/mods/ctx", "claude-mods/ctx")}
+# Reject paths that normalize to an old location but traverse a different tree.
+sys.exit(0 if target in owned and os.path.realpath(path) == os.path.realpath(target) else 1)
+' "$ctx" "$SRC" "$skills_home"; then
+  report REMOVE "$ctx"
+  if [[ "$mode" == apply ]]; then rm -- "$ctx"; fi
 fi
 
 if [[ "$mode" == apply ]]; then

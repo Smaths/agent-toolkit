@@ -9,19 +9,17 @@ Read [README.md](README.md) before changing this collection for its public overv
 
 ## Public-checkout privacy
 
-Keep raw agent transcripts, screenshots, live-session artifacts, and configuration exports outside this checkout. Commit only reviewed, sanitized summaries and synthetic fixtures. `.local-artifacts/` is an ignored accident guard, not approved storage for private evidence; force-adding it is blocked by the privacy check (pre-commit when enabled, and CI). Follow [the secret/privacy checks](README.md#secret-and-privacy-checks) before publishing.
+Keep raw agent transcripts, screenshots, live-session artifacts, and configuration exports outside this checkout. Commit only reviewed, sanitized summaries and synthetic fixtures. `.local-artifacts/` is an ignored accident guard, not approved storage for private evidence; force-adding it is blocked by the privacy check (pre-commit when enabled, and CI). Before publishing, follow the [secret and privacy checks](SECURITY.md).
 
 ## Harness documentation
 
-Before adding, changing, or reviewing harness-specific instructions, skills, extensions, configuration, or workflows, look up the **current official documentation** for each affected harness. Use documented best practices rather than remembered APIs or cached guidance:
+Consult **current official documentation** when work depends on harness behavior, such as an API, CLI flag, skill discovery or invocation rule, configuration, or compatibility claim. Skip the release check for wording-only work that does not change or assess those behaviors:
 
 - **Pi agent harness:** [official documentation index](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/index.md). Read the installed package's `README.md`, relevant `docs/` pages, and examples as well; discover its location from the running environment rather than hard-coding a versioned path.
 - **Codex:** [official Codex CLI documentation](https://developers.openai.com/codex/cli/); follow its links to the relevant configuration, skills, and integration guidance.
 - **Claude Code:** [official documentation](https://code.claude.com/docs/en/overview); use the [documentation index](https://code.claude.com/docs/llms.txt) to find relevant guidance.
 
-Identify the installed or project-pinned version and check the latest released version's relevant docs and release notes. Distinguish released guidance from unreleased default-branch changes. Apply current recommendations compatible with the target version; report version gaps rather than upgrading tools or configuration without authorization.
-
-In the task report, cite the documentation consulted and note the target version and any compatibility constraints. If current docs or version information are unavailable, state that limitation and what local evidence was used; do not claim latest-version compliance.
+For version-dependent work, identify the installed or pinned target, compare the relevant guidance and release notes with the latest release, and cite the sources and any compatibility limits in the report. Treat default-branch docs as unreleased unless confirmed otherwise. Report missing evidence or version gaps; do not upgrade tools or configuration without authorization.
 
 ## Add to the collection
 
@@ -44,7 +42,7 @@ bin/sync.sh            # apply
 
 From another directory, invoke the checkout's `bin/sync.sh` by path. The script finds its source checkout from its own location, not from the current directory or a fixed home-directory name. By default it targets your home directory; the optional positional `home` argument changes **only the destination home** (useful for isolated tests).
 
-The script links portable skills, including `unslop` and `swarm`, into real `~/.agents/skills` and `~/.claude/skills` directories. `swarm` uses the installed `orchestration` skill only in Orca-managed sessions. `--with-orca` remains an opt-in for any vendor-specific Orca skills; it does not change the portable `swarm` installation. The Claude status-line is **not** a skill and is not enabled by sync; owned links from the former mod's skill-path installation are removed. See the [status-line README](vendor/claude/status-line/README.md) for separate configuration and preservation of existing telemetry hooks. Codex can read `~/.agents/skills`, but separate Codex-specific and Pi installations remain outside this repo's sync policy; so do Atlassian `twg-*` skills in Claude and OpenCode and provider-synced skills.
+Sync links only portable skills into real `~/.agents/skills` and `~/.claude/skills` directories. The former `--with-orca` option is no longer supported; `swarm` still uses the installed `orchestration` skill in Orca-managed sessions. The script removes the obsolete Claude `ctx` skill symlink only when it points to a known former toolkit path. It does not enable the replacement [Claude status-line](vendor/claude/status-line/README.md). Codex can read `~/.agents/skills`; sync does not manage separate Codex or Pi installations, Atlassian `twg-*` skills, or provider-synced skills.
 
 Links point to source directories, so edits need no copying. Sync requires a populated checkout, Bash, and Python 3. It checks for destination conflicts before changing links, migrates links from the old repository layout and the former `~/.skills` or `~/.agent-toolkit` checkouts, and refuses to overwrite unrelated files or installations. `--dry-run` creates no files or directories; sync is not transactional if a filesystem error occurs during apply. Links to the checkout are absolute because agent directories may live elsewhere; moving the checkout again may break them and requires a fresh migration plan. Verify discovery in the installed agent separately.
 

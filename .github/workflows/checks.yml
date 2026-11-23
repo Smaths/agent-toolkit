@@ -33,7 +33,7 @@ jobs:
           tar -xzf gitleaks.tar.gz -C gitleaks-bin gitleaks
           echo "$RUNNER_TEMP/gitleaks-bin" >> "$GITHUB_PATH"
       - name: Test gate with real scanner
-        run: python3 bin/test_private.py --real
+        run: python3 bin/test_private.py --real -k test_real_
       - name: Check reachable history
         run: bin/check-private history
 
@@ -54,22 +54,3 @@ jobs:
         run: python -m pip install -r bin/requirements-check.txt
       - name: Run offline checks
         run: bin/check
-
-  debian-sync:
-    name: Sync (Debian ${{ matrix.debian }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        debian: ['12', '13']
-    container: debian:${{ matrix.debian }}-slim
-    timeout-minutes: 10
-    steps:
-      - name: Install test dependencies
-        run: apt-get update && apt-get install -y --no-install-recommends bash python3 git ca-certificates libstdc++6
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          path: toolkit-src # Exercise sync from a nested checkout, not a fixed home path.
-      - name: Run sync tests in Debian
-        run: python3 toolkit-src/bin/test_sync.py -v

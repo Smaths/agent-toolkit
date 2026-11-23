@@ -108,7 +108,7 @@ def main():
     version = json.loads((HERE / "gitleaks-pin.json").read_text())["version"]
     scanner = shutil.which("gitleaks")
     if not scanner:
-        raise Blocked(f"Gitleaks missing; install {version}. See README.md#enable-locally-explicit-opt-in.")
+        raise Blocked(f"Gitleaks missing; install {version}. See SECURITY.md#enable-local-hooks.")
     installed = subprocess.check_output([scanner, "version"], stderr=subprocess.DEVNULL).decode().strip()
     if installed.lstrip("v") != version:
         raise Blocked(f"Gitleaks {version} required; installed version differs. See bin/gitleaks-pin.json.")
