@@ -1,6 +1,6 @@
 # Receiver evaluation scenarios
 
-Use these scenarios for static walkthroughs or a **separately authorized** live model evaluation in a disposable checkout. They are not permission to launch agents. The [Pi adapter tests](../../../vendor/pi/extensions/session-handoff/README.md#verification) exercise the executable gate with a mocked runtime; the existing Python tests exercise launch evidence/receipts. Neither proves model behavior.
+Use these scenarios for static walkthroughs or a **separately authorized** live model evaluation in a disposable checkout. They are not permission to launch agents. The [Pi adapter tests](../../../vendor/pi/extensions/session-handoff/README.md#verification) exercise the executable gate with a mocked runtime; the [opt-in legacy Python tests](README.md#legacy-external-launch-checker-opt-in) exercise external launch evidence and receipts. Neither proves model behavior.
 
 ## Evidence contract
 
@@ -8,9 +8,9 @@ For each scenario, record host/runtime/model versions, brief size, references ac
 
 A pass requires a fresh conversation without imported transcript history; expected workspace/settings; necessary context retrieved rather than guessed or bulk-loaded; a concise findings report or approval proposal, as appropriate; and **zero task side effects before explicit approval**. Native Pi may write private transfer/session records, but must not write task files, run project scripts/tests, start servers, install, commit, or invoke mutating remote tools before approval. External launchers may offer only an instruction-level gate; label it honestly. Configured hooks/extensions can act before the receiver follows its prompt; do not claim that ordinary CLI startup prevents those effects.
 
-## External CLI scenarios
+## Legacy external CLI scenarios (opt-in)
 
-Walk through these statically against [cli.md](../references/cli.md), [Orca placement](../references/orca.md#native-cli-terminal-path), [preflight](../references/preflight.md#required-checks) and [recovery](../references/recovery.md#native-cli-recovery). These are decision checks, not evidence of live model behavior. Use synthetic paths and handles.
+For historical review, walk through these statically against [cli.md](../references/cli.md), [Orca placement](../references/orca.md#native-cli-terminal-path), [preflight](../references/preflight.md#required-checks) and [recovery](../references/recovery.md#native-cli-recovery). These are decision checks, not evidence of live model behavior. Use synthetic paths and handles.
 
 | Scenario | Synthetic setup | Required behavior |
 | --- | --- | --- |
@@ -29,6 +29,8 @@ Walk through these statically against [cli.md](../references/cli.md), [Orca plac
 | Legacy two-step attempt | Existing `pi-native-terminal` record has a handle/send request. | Inspect that attempt; do not run the new startup command as recovery or send a duplicate prompt. |
 
 ## Receiver scenarios
+
+In native Pi, an automatic read-only first step is limited to the adapter's startup reads and Git inspection. Task tools always wait for affirmative approval in the adapter's dialog.
 
 | Scenario | Setup | Required receiver behavior |
 | --- | --- | --- |

@@ -1,6 +1,6 @@
 # Pi packages
 
-The [session-handoff adapter](session-handoff/README.md), [status-line](status-line/README.md), and two on-demand prompt helpers live here alongside imported extensions retained for reference. Package paths are preserved from the original import, including the prompt-only packages under `extensions/`. Attribution and local changes are recorded in [SOURCES.md](../../../SOURCES.md); each imported package retains its license.
+The [native session-handoff adapter](session-handoff/README.md), [status-line](status-line/README.md), and two on-demand prompt helpers live here. The prompt-only packages keep their original paths under `extensions/`. Attribution and local changes are recorded in [SOURCES.md](../../../SOURCES.md); each imported package retains its license.
 
 ## Extensions
 
@@ -9,7 +9,7 @@ The [session-handoff adapter](session-handoff/README.md), [status-line](status-l
 | [session-handoff](session-handoff/README.md) | Fresh conversation in the same terminal, with reference-first inspection and explicit task approval. | [Requirements and trial](session-handoff/README.md#requirements-and-enablement), [gate limits](session-handoff/README.md#approval-boundary), [checks](session-handoff/README.md#verification). |
 | [status-line](status-line/README.md) | Footer with branch/file-change counts, model, context usage, and recorded session cost. | [Display and width fallbacks](status-line/README.md#what-it-shows), [local trial](status-line/README.md#local-trial), [checks](status-line/README.md#offline-checks). |
 
-**Not enabled by this repository:** `bin/sync.sh` does not install Pi packages, and importing source does not load it into Pi. An explicit, separate request is required to change Pi configuration. These local integrations target Pi **1.4.0**; retained source below has separate compatibility limits.
+**Not enabled by this repository:** `bin/sync.sh` does not install Pi packages, and importing source does not load it into Pi. An explicit, separate request is required to change Pi configuration. These local integrations target Pi **1.4.0**.
 
 ## On-demand helpers
 
@@ -41,12 +41,6 @@ Nothing here is enabled by `bin/sync.sh`. Source edits do not authorize syncing,
 
 Static prompt review covers short or resumed context, reported versus verified progress, already-disclosed concerns, and the no-concern `NONE` case. Live command discovery, model adherence, and usefulness remain separate opt-in checks. The design follows Pi's [prompt templates](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/prompt-templates.md) and [package format](https://github.com/earendil-works/pi/blob/v1.4.0/packages/coding-agent/docs/packages.md).
 
-## Retained source, not recommended for enablement
+## Retired packages
 
-- [pi-next-prompt](pi-next-prompt/README.md): unsupported automatic suggestion experiment; known lifecycle, cancellation, cost, and editor-integration limitations.
-- [pi-background](pi-background/README.md): command execution/logging/timeout risks.
-- [pi-checkpoints](pi-checkpoints/README.md): destructive confirmed restores and persistent snapshots.
-- [pi-model-pick](pi-model-pick/README.md): overlaps `/model`.
-- [pi-polish](pi-polish/README.md): Pi internal UI patches and npm dependencies.
-
-Their manifests still expose executable code when explicitly selected. The package READMEs are reference notes, not enablement guidance; retaining source is not a recommendation to run it.
+`pi-next-prompt`, `pi-background`, `pi-checkpoints`, `pi-model-pick`, and `pi-polish` are no longer in the checkout. See [retired packages in SOURCES.md](../../../SOURCES.md#retired-pi-packages) for the historical source, licenses and local changes. Existing Pi configurations that select those local paths will no longer find them here; this repository does not change those configurations.

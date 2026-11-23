@@ -1,6 +1,6 @@
 # Legacy launch workflow
 
-Retained for the Pi adapter and existing launch helpers. The document-only [session-handoff skill](SKILL.md) does not use this workflow.
+Historical external launch workflow, retained for reference only. Neither the [portable skill](SKILL.md) nor the [native Pi adapter](../../vendor/pi/extensions/session-handoff/README.md) loads this file. The launch examples record past behavior, not current support or permission to run them. The [legacy checker and tests](tests/README.md) are opt-in.
 
 # Session handoff
 

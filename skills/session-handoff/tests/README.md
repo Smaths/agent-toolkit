@@ -1,6 +1,8 @@
 # Handoff checks
 
-From the repository root, run the offline suite with Python 3 and a POSIX `sh` on PATH. It uses only Python's standard library and local shell subprocesses:
+## Legacy external-launch checker (opt-in)
+
+The standalone Python checker and tests cover the [historical external launch workflow](../legacy-workflow.md), not the portable skill or native Pi adapter. They are not in the default check suite. To run the legacy offline tests from the repository root, use Python 3 and a POSIX `sh` on PATH:
 
 ```bash
 python3 -B skills/session-handoff/tests/test_check_handoff.py
@@ -20,7 +22,7 @@ Use [receiver-scenarios.md](receiver-scenarios.md) for external CLI launch/obser
 
 ## Opt-in live smoke test
 
-Run only when the user explicitly requests live testing and selects a disposable checkout. Use a disposable Orca workspace for the Orca launch path; the native Pi adapter instead runs in the same terminal as its source. Do not test in a working task's checkout or change global settings.
+The external launch recipes below are historical; do not treat them as current compatibility evidence. Run only when the user explicitly requests live testing and selects a disposable checkout. Use a disposable Orca workspace for the Orca launch path; the native Pi adapter instead runs in the same terminal as its source. Do not test in a working task's checkout or change global settings.
 
 For Pi, Claude and Codex, test only the approved launch route and placement. Native CLI trials use a positional prompt in an interactive terminal, not the Pi adapter or an Orca managed launch. Do not change the user's Chat UI setting to force a mode without approval. Record host/agent versions, requested settings, launch kind, creation, prompt supplied, observed startup, actual placement and independently observable settings. Managed launches retain their prompt outcomes. Mark unavailable modes as skipped and unobservable settings as unknown, not passed.
 
