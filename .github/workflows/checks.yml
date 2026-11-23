@@ -56,8 +56,13 @@ jobs:
         run: bin/check
 
   debian-sync:
+    name: Sync (Debian ${{ matrix.debian }})
     runs-on: ubuntu-latest
-    container: debian:stable-slim
+    strategy:
+      fail-fast: false
+      matrix:
+        debian: ['12', '13']
+    container: debian:${{ matrix.debian }}-slim
     timeout-minutes: 10
     steps:
       - name: Install test dependencies

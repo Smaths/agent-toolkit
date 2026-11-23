@@ -1,5 +1,6 @@
 """Run with python3 bin/test_sync.py. All writes stay in temporary directories."""
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -444,6 +445,31 @@ class SyncTests(unittest.TestCase):
         self.assertFalse((outside / "example").exists())
         self.assertFalse(self.claude.parent.exists())
 
+    def test_non_directory_agent_root_is_refused_before_cleanup(self):
+        self.old_codex.symlink_to(self.old_skill)
+        for name in (".agents", ".claude"):
+            root = self.root / name
+            for kind in ("file", "dangling symlink"):
+                with self.subTest(name=name, kind=kind):
+                    if kind == "file":
+                        root.write_text("Keep me\n")
+                    else:
+                        root.symlink_to("missing")
+                    try:
+                        for options in (("--dry-run",), ()):
+                            result = self.run_sync(*options)
+                            self.assertNotEqual(result.returncode, 0)
+                            self.assertIn(f"Refusing non-directory agent root: {root}", result.stderr)
+                            self.assertEqual(self.old_codex.readlink(), self.old_skill)
+                            self.assertFalse(self.shared.parent.exists())
+                            self.assertFalse(self.claude.parent.exists())
+                        if kind == "file":
+                            self.assertEqual(root.read_text(), "Keep me\n")
+                        else:
+                            self.assertEqual(root.readlink(), Path("missing"))
+                    finally:
+                        root.unlink()
+
     def test_duplicate_source_names_fail_before_writes(self):
         skill = self.root / ".skills/vendor/orca/skills/example"
         skill.mkdir(parents=True)
@@ -481,6 +507,39 @@ class SyncTests(unittest.TestCase):
         result = self.run_sync()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(link.resolve(), other)
+
+
+class CheckoutSyncTests(unittest.TestCase):
+    def test_real_checkout_preview_apply_and_repeat(self):
+        skills = {p.parent.name: p.parent for p in SCRIPT.parent.parent.glob("skills/*/SKILL.md")}
+        self.assertTrue(skills, "Test must run from a populated checkout")
+        with tempfile.TemporaryDirectory(prefix="toolkit checkout sync ") as temp:
+            cwd = Path(temp).resolve()
+            home = cwd / "home with spaces"
+            home.mkdir()
+
+            def sync(*options):
+                result = subprocess.run(
+                    [str(SCRIPT), *options], cwd=cwd, env=dict(os.environ, HOME=str(home)),
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                return set(result.stdout.splitlines())
+
+            roots = [home / agent / "skills" for agent in (".agents", ".claude")]
+            destinations = {root / name for root in roots for name in skills}
+            self.assertEqual(sync("--dry-run"), {f"LINK {path}" for path in destinations})
+            self.assertEqual(list(home.iterdir()), [])
+
+            self.assertEqual(sync(), {f"LINK {path}" for path in destinations})
+            self.assertEqual(sync(), {f"KEEP {path}" for path in destinations})
+            self.assertEqual({p.name for p in home.iterdir()}, {".agents", ".claude"})
+            for root in roots:
+                self.assertFalse(root.is_symlink())
+                self.assertEqual({p.name for p in root.iterdir()}, set(skills))
+                for name, source in skills.items():
+                    self.assertEqual((root / name).readlink(), source)
+                    self.assertTrue((root / name / "SKILL.md").is_file())
 
 
 if __name__ == "__main__":

@@ -16,6 +16,12 @@ Examples include [swarm](skills/swarm/SKILL.md), [session handoff](skills/sessio
 
 Adding a tool to this repository does not enable it on your computer. See [AGENTS.md](AGENTS.md) for contribution instructions and [computer enablement](AGENTS.md#enable-on-this-computer).
 
+## Sync on Debian
+
+On Debian 12 (Bookworm) and 13 (Trixie), sync needs a populated checkout and the system Bash, coreutils, and Python 3. On a minimal install, install any missing packages with `apt-get install bash coreutils python3` as root. Sync itself runs as your regular user and does not need Node.js, a Python virtual environment, or any agent CLI.
+
+Follow the [preview and apply instructions](AGENTS.md#enable-on-this-computer). To verify without touching your home directory, run `python3 bin/test_sync.py -v` from the checkout. CI runs this suite on both Debian releases, including preview, apply, and repeat apply against the real checkout in a temporary home.
+
 ## Secret and privacy checks
 
 Keep private evidence outside the checkout; see [the policy](AGENTS.md#public-checkout-privacy). The shared `bin/check-private` gate requires Git 2.41+, Python 3, and native Gitleaks Git scanning with built-in rules. [The pin file](bin/gitleaks-pin.json) is the single source for the required version and CI archive checksum. Missing/wrong scanner versions, scanner/Git errors, shallow history, and unsupported submodules/non-commit targets block the check.

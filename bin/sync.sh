@@ -153,7 +153,12 @@ for (( i=0; i<${#skills[@]}; i++ )); do
   done
 done
 for agent in .agents .claude; do
-  destination="$skills_home/$agent/skills"
+  agent_root="$skills_home/$agent"
+  if [[ ( -e "$agent_root" || -L "$agent_root" ) && ! -d "$agent_root" ]]; then
+    printf 'Refusing non-directory agent root: %s\n' "$agent_root" >&2
+    exit 1
+  fi
+  destination="$agent_root/skills"
   if [[ -L "$destination" || ( -e "$destination" && ! -d "$destination" ) ]]; then
     printf 'Refusing non-directory or symlinked skills root: %s\n' "$destination" >&2
     exit 1
