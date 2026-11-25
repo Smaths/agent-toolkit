@@ -9,6 +9,7 @@ local:
   - skills/commit
   - skills/recap
   - skills/sync-docs
+  - skills/trace-review
   - skills/unslop-for-agents
   - skills/verification-readiness
 imports:
