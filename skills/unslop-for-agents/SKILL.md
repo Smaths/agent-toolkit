@@ -1,7 +1,7 @@
 ---
 name: unslop-for-agents
 description: Edit agent instructions for reliable behavior and plain language.
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Unslop for agents
